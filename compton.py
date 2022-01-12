@@ -74,7 +74,6 @@ def gaussian(peak_domain=None, A0=None, b0=None, sigma0=None):
 def calibrate(energy, ch_peaks, ch_unc):
 
     
-
     data_set = mcphysics.data.load_chns() # load .chn data files
     runs = len(data_set) # number of data files loaded
     f = s.data.fitter() # initiate fitter object
@@ -96,6 +95,8 @@ def combine_chns():
     
     databoxes = mcphysics.data.load_chns()
     databox = databoxes[0]
+    databox['Counts'] =- databox['Counts']
+
     for box in databoxes:
         databox['Counts'] =+ box['Counts']
 

@@ -1,10 +1,12 @@
+from asteval.astutils import ReturnedNone
 import spinmob as s
 import mcphysics
 import numpy as np
 
-peaks = {'Ba': [[50, 200], [200, 300], [800, 1050]], 'Co': [300, 500], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
+peaks = {'Ba': [[50, 200], [200, 300], [900, 1050]], 'Co': [300, 500], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
 energy_dict = {'Ba': [31, 81, 356], 'Co': 122, 'Cs': 661, 'Na': 511}
 gaussian_guesses = {'Ba': [{'A0': 7500, 'b0': 100, 'sigma0': 10, 'C0': 10}, {'A0': 3500, 'b0': 250, 'sigma0': 20, 'C0': 10}, {'A0': 3000, 'b0': 950, 'sigma0': 40, 'C0': 10}], 'Co': {'A0': 72000, 'b0': 350, 'sigma0': 20, 'C0': 10}, 'Cs': {'A0': 1200, 'b0': 1700, 'sigma0': 60, 'C0': 10}, 'Na': {'A0': 2500, 'b0': 1400, 'sigma0': 60, 'C0': 10}}
+al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
 
 def get_peak_domains():
     """ Retrieve stored peak channel domains."""
@@ -83,7 +85,7 @@ def combine_chns():
     """
     databoxes = mcphysics.data.load_chns() # load chns into a list
     databox = databoxes[0] # save first databox 
-    databox['Counts'] =- databox['Counts'] # delete counts of saved databox
+    databox['Counts'] -= databox['Counts'] # delete counts of saved databox
     for box in databoxes:
         databox['Counts'] =+ box['Counts'] # add all counts to saved databox
 
@@ -124,3 +126,68 @@ def calibrate(n):
     
     return param
 #__________________________________________________________________________________
+
+def energy_fit(energy, energy_unc, angle):
+    """
+
+    Arguments
+    ---------
+    energy, energy_unc = counts and their uncertainties
+    angle = list of the angles 
+    
+    Returns
+    -------
+    
+    """
+    f = s.data.fitter() # create a fitter object
+    f.set_functions(f = '661.6/(1+(661.6/E)*(1-cos(x)))', p = 'E') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_data(xdata = angle, ydata = energy**(-1), eydata = energy_unc * energy**(-2), xlabel='Angle (°)', ylabel='$Energy^{-1} (KeV^{-1})$') # supply the data
+    f.fit() # make the fit    
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+     
+    return param
+#__________________________________________________________________________________
+
+def get_rest_mass(n, m, m_std, c, c_std):
+    """
+    
+    Argument
+    --------
+    n:  int, number of different angles to consider;
+    m:  float, slope of energy vs channel linear curve (computed through the calibration() function);
+    c:  float, intercept of energy vs channel linear curve;
+
+    Return
+    ------
+    param: array, fit parameters from the energy_fit function;
+    """
+    print('Select all files associated to one scattered and angle, for multiple angles.')
+    energy = np.zeros(n)
+    energy_unc = np.zeros(n)
+    angles = []
+    for i in range(0, n):
+        data = subtract_background() # combine files of the same angle and scatterer
+        angles.append(data.headers['description'][4:7]) # retrieve angle 
+        element = data.headers['description'][0:2]
+        if element == 'Al':
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5)
+        else: 
+            print('Energy fit for' + element + ' not yet implemented.')
+            return
+        
+        energy[i] = m*b+c 
+        energy_unc[i] = np.sqrt(energy[i]**2*((m_std/m)**2 + ((b_std+sigma+sigma_std)/b)**2) + c_std**2)
+    
+    angles_int = [np.pi*int(angle)/180 for angle in angles]
+    param = energy_fit(energy, energy_unc, angles_int)
+
+    return param
+#__________________________________________________________________________________
+
+def subtract_background():
+    """ Subtract background data of scattered data. Choose files which are of the same angle. """
+    data = combine_chns()
+    background = combine_chns()
+    data['Counts'] -= background['Counts']
+
+    return data

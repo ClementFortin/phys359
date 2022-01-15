@@ -159,9 +159,9 @@ def get_rest_mass(n, m, m_std, c, c_std):
         1. launch the function,
         2. select files to combine for the first angle (say Al 220),
         3. select background data files to combine for first angle (no scatterer 220),
-        4. select files to combine for the first angle (say Al 230),
+        4. select files to combine for the second angle (say Al 230),
         5. select background data files to combine for second angle (no scatterer 230),
-        6. select files to combine for the first angle (say Al 240),
+        6. select files to combine for the third angle (say Al 240),
         7. select background data files to combine for third angle (no scatterer 240).
 
     Argument

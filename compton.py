@@ -1,11 +1,13 @@
-from asteval.astutils import ReturnedNone
 import spinmob as s
 import mcphysics
 import numpy as np
 
 peaks = {'Ba': [[50, 200], [200, 300], [900, 1050]], 'Co': [300, 500], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
 energy_dict = {'Ba': [31, 81, 356], 'Co': 122, 'Cs': 661, 'Na': 511}
-gaussian_guesses = {'Ba': [{'A0': 7500, 'b0': 100, 'sigma0': 10, 'C0': 10}, {'A0': 3500, 'b0': 250, 'sigma0': 20, 'C0': 10}, {'A0': 3000, 'b0': 950, 'sigma0': 40, 'C0': 10}], 'Co': {'A0': 72000, 'b0': 350, 'sigma0': 20, 'C0': 10}, 'Cs': {'A0': 1200, 'b0': 1700, 'sigma0': 60, 'C0': 10}, 'Na': {'A0': 2500, 'b0': 1400, 'sigma0': 60, 'C0': 10}}
+gaussian_guesses = {'Ba': [{'A0': 7500, 'b0': 100, 'sigma0': 10, 'C0': 10}, {'A0': 3500, 'b0': 250, 'sigma0': 20, 'C0': 10}, {'A0': 3000, 'b0': 950, 'sigma0': 40, 'C0': 10}], 
+                    'Co': {'A0': 72000, 'b0': 350, 'sigma0': 20, 'C0': 10}, 
+                    'Cs': {'A0': 1200, 'b0': 1700, 'sigma0': 60, 'C0': 10}, 
+                    'Na': {'A0': 2500, 'b0': 1400, 'sigma0': 60, 'C0': 10}}
 al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
 
 def get_peak_domains():
@@ -128,19 +130,20 @@ def calibrate(n):
 #__________________________________________________________________________________
 
 def energy_fit(energy, energy_unc, angle):
-    """
+    """ Fit function for the energy again angles. Used in "get_rest_mass()" function.
 
     Arguments
     ---------
-    energy, energy_unc = counts and their uncertainties
-    angle = list of the angles 
+    energy:     array, energy peaks (obtained from the calibration values relating channel to energy);
+    energy_unc: array, uncertainty in energy;
+    angle:      array, angle under consideration;
     
-    Returns
-    -------
-    
+    Return
+    ------
+    param:      fit parameters of energy vs angle;
     """
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '661.6/(1+(661.6/E)*(1-cos(x)))', p = 'E') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '661.6/(1+(661.6/E)*(1-cos(x)))', p = 'E=511') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy**(-1), eydata = energy_unc * energy**(-2), xlabel='Angle (°)', ylabel='$Energy^{-1} (KeV^{-1})$') # supply the data
     f.fit() # make the fit    
     param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
@@ -149,8 +152,18 @@ def energy_fit(energy, energy_unc, angle):
 #__________________________________________________________________________________
 
 def get_rest_mass(n, m, m_std, c, c_std):
-    """
-    
+    """ Using the "energy_fit()" function above, fit the relation for energy against angle for angles selected. This function also requires background data to be selected 
+    following the selection of a scatterer at a certain angle (background data must be at the same angle).
+
+    Example for n=3 (fit for three different angles, say 220, 230, 240):
+        1. launch the function,
+        2. select files to combine for the first angle (say Al 220),
+        3. select background data files to combine for first angle (no scatterer 220),
+        4. select files to combine for the first angle (say Al 230),
+        5. select background data files to combine for second angle (no scatterer 230),
+        6. select files to combine for the first angle (say Al 240),
+        7. select background data files to combine for third angle (no scatterer 240).
+
     Argument
     --------
     n:  int, number of different angles to consider;

@@ -2,7 +2,7 @@ import spinmob as s
 import mcphysics
 import numpy as np
 
-peaks = {'Ba': [[50, 200], [200, 300], [900, 1050]], 'Co': [300, 500], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
+peaks = {'Ba': [[50, 140], [200, 300], [850, 1100]], 'Co': [300, 425], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
 energy_dict = {'Ba': [31, 81, 356], 'Co': 122, 'Cs': 661, 'Na': 511}
 gaussian_guesses = {'Ba': [{'A0': 7500, 'b0': 100, 'sigma0': 10, 'C0': 10}, {'A0': 3500, 'b0': 250, 'sigma0': 20, 'C0': 10}, {'A0': 3000, 'b0': 950, 'sigma0': 40, 'C0': 10}], 
                     'Co': {'A0': 72000, 'b0': 350, 'sigma0': 20, 'C0': 10}, 
@@ -29,7 +29,7 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None):
     f = s.data.fitter() # initiate fitter object
     f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + C', p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
     if region is None:
-        f.set_data(xdata = data['Channel'], ydata = data['Counts'], xlabel='Channel', ylabel='Counts')
+        f.set_data(xdata = data['Channel'], ydata = data['Counts'], eydata=np.sqrt(data['Counts']), xlabel='Channel', ylabel='Counts')
     else:
         f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]], xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
@@ -112,7 +112,7 @@ def calibrate(n):
             _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element], **gaussian_guesses[element]) # fit gaussian 
             energy = np.append(energy, energy_dict[element])
             channel = np.append(channel, b)
-            channel_unc = np.append(channel_unc, b_std + sigma + sigma_std) # width of peak
+            channel_unc = np.append(channel_unc, b_std) # width of peak
         
     param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
     

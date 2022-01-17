@@ -2,16 +2,16 @@ import spinmob as s
 import mcphysics
 import numpy as np
 
-peaks = {'Ba': [[50, 140], [200, 300], [875, 1050]], 'Co': [300, 425], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
+peaks = {'Ba': [[50, 140], [200, 300], [875, 1050]], 'Co': [300, 425], 'Na': [1250, 1500], 'Cs': [1600, 1950]}
 energy_dict = {'Ba': [31, 81, 356], 'Co': 122, 'Cs': 661, 'Na': 511}
-gaussian_guesses = {'Ba': [{'A0': 7500, 'b0': 100, 'sigma0': 10, 'C0': 10}, {'A0': 3500, 'b0': 250, 'sigma0': 20, 'C0': 10}, {'A0': 3000, 'b0': 950, 'sigma0': 40, 'C0': 10}], 
-                    'Co': {'A0': 72000, 'b0': 350, 'sigma0': 20, 'C0': 10}, 
-                    'Cs': {'A0': 1200, 'b0': 1700, 'sigma0': 60, 'C0': 10}, 
-                    'Na': {'A0': 2500, 'b0': 1400, 'sigma0': 60, 'C0': 10}}
+gaussian_guesses = {'Ba': [{'A0': 75000, 'b0': 100, 'sigma0': 10, 'C0': 50}, {'A0': 35000, 'b0': 250, 'sigma0': 20, 'C0': 50}, {'A0': 30000, 'b0': 950, 'sigma0': 40, 'C0': 50}], 
+                    'Co': {'A0': 72000, 'b0': 350, 'sigma0': 20, 'C0': 50}, 
+                    'Cs': {'A0': 12000, 'b0': 1700, 'sigma0': 60, 'C0': 50}, 
+                    'Na': {'A0': 25000, 'b0': 1400, 'sigma0': 50, 'C0': 50}}
 al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
 #__________________________________________________________________________________
 
-def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, cobalt_fit=False, cobalt_param=None):
+def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0=None):
     """ Function to fit Gaussian to compton scattering data. 
     
     Parameters:
@@ -27,17 +27,12 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, cobalt_
     param:              array of the gaussian fit parameters and uncertainties;  
     """
     f = s.data.fitter() # initiate fitter object
-    if cobalt_fit:
-        if cobalt_param is None:
-            TypeError(['coblat_param variable needs to be an array of 3 float: [D_0, ]'])
-        f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + D * exp(-0.5*((x - e)/f)**2)/(f*sqrt(2*pi))', 
-            p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', D='+str(cobalt_param[0])+', e='+str(cobalt_param[1])+'f='+str(cobalt_param[2]))
-    else:
-        f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + C', p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
+    f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + C', p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
+    #f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + C/sqrt(1+(x-b)**2)', p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
     if region is None:
-        f.set_data(xdata = data['Channel'], ydata = data['Counts']+1, eydata=np.sqrt(data['Counts']+1), xlabel='Channel', ylabel='Counts')
+        f.set_data(xdata = data['Channel'], ydata = data['Counts']+0.01, eydata=np.sqrt(data['Counts']+0.01), xlabel='Channel', ylabel='Counts')
     else:
-        f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+1, eydata=np.sqrt(data['Counts'][region[0]:region[1]]+1), xlabel='Channel', ylabel='Counts')
+        f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+0.01, eydata=np.sqrt(data['Counts'][region[0]:region[1]]+0.01), xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
     f.fit() # fit to data
     A = f.get_fit_results()['A']
@@ -51,7 +46,10 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, cobalt_
     
     return param
 #__________________________________________________________________________________
+def double_gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0=None):
 
+    return
+#__________________________________________________________________________________
 def linear_fit(channel, channel_unc, energy):
     """ Fit a reciprocal linear function to data with uncertainties.
     Arguments
@@ -86,7 +84,7 @@ def combine_chns():
     databox = databoxes[0] # save first databox 
     databox['Counts'] -= databox['Counts'] # delete counts of saved databox
     for box in databoxes:
-        databox['Counts'] =+ box['Counts'] # add all counts to saved databox
+        databox['Counts'] += box['Counts'] # add all counts to saved databox
 
     return databox
 #__________________________________________________________________________________
@@ -113,12 +111,12 @@ def calibrate(n):
                 _, _, b, b_std, _, _ = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
                 energy = np.append(energy, energy_dict[element][j])
                 channel = np.append(channel, b)
-                channel_unc = np.append(channel_unc, b_std) # width of peak
+                channel_unc = np.append(channel_unc, b_std+10) # width of peak
         else:
             _, _, b, b_std, _, _ = gaussian_fit(data, peaks[element], **gaussian_guesses[element]) # fit gaussian 
             energy = np.append(energy, energy_dict[element])
             channel = np.append(channel, b)
-            channel_unc = np.append(channel_unc, b_std) # width of peak
+            channel_unc = np.append(channel_unc, b_std+10) # width of peak
         
     param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
     
@@ -183,7 +181,7 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5)
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], A0=400, b0=np.mean(al_peaks[angles[i]]), sigma0=30, C=5)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
             return

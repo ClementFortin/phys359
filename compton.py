@@ -2,7 +2,7 @@ import spinmob as s
 import mcphysics
 import numpy as np
 
-peaks = {'Ba': [[50, 140], [200, 300], [850, 1100]], 'Co': [300, 425], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
+peaks = {'Ba': [[50, 140], [200, 300], [875, 1050]], 'Co': [300, 425], 'Cs': [1500, 2000], 'Na': [1000, 1800]}
 energy_dict = {'Ba': [31, 81, 356], 'Co': 122, 'Cs': 661, 'Na': 511}
 gaussian_guesses = {'Ba': [{'A0': 7500, 'b0': 100, 'sigma0': 10, 'C0': 10}, {'A0': 3500, 'b0': 250, 'sigma0': 20, 'C0': 10}, {'A0': 3000, 'b0': 950, 'sigma0': 40, 'C0': 10}], 
                     'Co': {'A0': 72000, 'b0': 350, 'sigma0': 20, 'C0': 10}, 
@@ -11,7 +11,7 @@ gaussian_guesses = {'Ba': [{'A0': 7500, 'b0': 100, 'sigma0': 10, 'C0': 10}, {'A0
 al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
 #__________________________________________________________________________________
 
-def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None):
+def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, cobalt_fit=False, cobalt_param=None):
     """ Function to fit Gaussian to compton scattering data. 
     
     Parameters:
@@ -27,11 +27,17 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None):
     param:              array of the gaussian fit parameters and uncertainties;  
     """
     f = s.data.fitter() # initiate fitter object
-    f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + C', p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
-    if region is None:
-        f.set_data(xdata = data['Channel'], ydata = data['Counts'], eydata=np.sqrt(data['Counts']), xlabel='Channel', ylabel='Counts')
+    if cobalt_fit:
+        if cobalt_param is None:
+            TypeError(['coblat_param variable needs to be an array of 3 float: [D_0, ]'])
+        f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + D * exp(-0.5*((x - e)/f)**2)/(f*sqrt(2*pi))', 
+            p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', D='+str(cobalt_param[0])+', e='+str(cobalt_param[1])+'f='+str(cobalt_param[2]))
     else:
-        f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]], xlabel='Channel', ylabel='Counts')
+        f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + C', p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
+    if region is None:
+        f.set_data(xdata = data['Channel'], ydata = data['Counts']+1, eydata=np.sqrt(data['Counts']+1), xlabel='Channel', ylabel='Counts')
+    else:
+        f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+1, eydata=np.sqrt(data['Counts'][region[0]:region[1]]+1), xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
     f.fit() # fit to data
     A = f.get_fit_results()['A']
@@ -104,12 +110,12 @@ def calibrate(n):
         element = data.headers['description'][0:2]
         if element == 'Ba':
             for j in range(0,3): # loop over all peaks of Barium
-                _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
+                _, _, b, b_std, _, _ = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
                 energy = np.append(energy, energy_dict[element][j])
                 channel = np.append(channel, b)
-                channel_unc = np.append(channel_unc, b_std + sigma + sigma_std) # width of peak
+                channel_unc = np.append(channel_unc, b_std) # width of peak
         else:
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element], **gaussian_guesses[element]) # fit gaussian 
+            _, _, b, b_std, _, _ = gaussian_fit(data, peaks[element], **gaussian_guesses[element]) # fit gaussian 
             energy = np.append(energy, energy_dict[element])
             channel = np.append(channel, b)
             channel_unc = np.append(channel_unc, b_std) # width of peak
@@ -135,11 +141,13 @@ def energy_fit(energy, energy_unc, angle, lin=True):
     f = s.data.fitter() # create a fitter object
     if lin:
         f.set_functions(f = '661.6/(1 + 661.6/E*(1-cos(x)))', p = 'E=511') # set the function, with E = m_e c^2 (electron rest mass energy)
+        f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (KeV)$') # supply the data
     else:
         f.set_functions(f = '1/661.6 + 1/E*(1-cos(x))', p = 'E=511') # set the function with 1/E, with E = m_e c^2 (electron rest mass energy)
-    f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (rad)', ylabel='$Energy (KeV)$') # supply the data
+        f.set_data(xdata = angle, ydata = energy**(-1), eydata = energy_unc * energy**(-2), xlabel='Angle (°)', ylabel='$Energy^{-1} (KeV^{-1})$') # supply the data
+    
     f.set(plot_guess=False)
-    f.fit() # make the fit    
+    f.fit() # make the fit
     param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
      
     return param
@@ -181,9 +189,9 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
             return
         
         energy[i] = m*b+c 
-        energy_unc[i] = np.sqrt(b**2*m_std**2 + m**2*(b_std+sigma+sigma_std)**2 + c_std**2)
-    
-    angles_int = [np.pi*(180 - int(angle))/180 for angle in angles]
+        energy_unc[i] = np.sqrt(b**2*m_std**2 + m**2*b_std**2 + c_std**2)
+
+    angles_int = np.array([int(angle) - 180 for angle in angles])
     param = energy_fit(energy, energy_unc, angles_int)
 
     return param

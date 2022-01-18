@@ -2,10 +2,10 @@ import spinmob as s
 import mcphysics
 import numpy as np
 
-peaks = {'Ba': [[50, 130], [200, 300], [900, 1050]], 'Co': [325, 393], 'Na': [1250, 1500], 'Cs': [1575, 1950]}
+peaks = {'Ba': [[50, 130], [200, 300], [900, 1050]], 'Co': [325, 425], 'Na': [1250, 1600], 'Cs': [1625, 2000]}
 energy_dict = {'Ba': [30.973, 80.9979, 356.0129], 'Co': [122.0605, 136.47356], 'Cs': 661.657, 'Na': 511.0}
 gaussian_guesses = {'Ba': [{'A0': 100000, 'b0': 100, 'sigma0': 10, 'C0': 500}, {'A0': 100000, 'b0': 250, 'sigma0': 20, 'C0': 500}, {'A0': 100000, 'b0': 950, 'sigma0': 40, 'C0': 500}], 
-                    'Co': {'A0': 100000, 'b0': 350, 'sigma0': 20, 'C0': 10000, 'd0': 370, 'e0': 10}, 
+                    'Co': {'A0': 700000, 'b0': 355, 'sigma0': 20, 'C0': 10000, 'd0': 370, 'e0': 10, 'g0': 9000}, 
                     'Cs': {'A0': 100000, 'b0': 1700, 'sigma0': 60, 'C0': 50}, 
                     'Na': {'A0': 100000, 'b0': 1400, 'sigma0': 50, 'C0': 50}}
 al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
@@ -37,7 +37,7 @@ def gaussian_fit(data, region, A0='', b0='', sigma0='', C0=''):
     return param
 #__________________________________________________________________________________
 
-def bimodal_fit(data, region, A0='', b0='', sigma0='', C0='', d0='', e0=''):
+def bimodal_fit(data, region, A0='', b0='', sigma0='', C0='', d0='', e0='', g0=''):
     """ Function to fit double photopeak in compton scattering data.
 
     Arguments
@@ -57,8 +57,8 @@ def bimodal_fit(data, region, A0='', b0='', sigma0='', C0='', d0='', e0=''):
 
     """
     f = s.data.fitter()
-    f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi))+ C* exp(-0.5*((x - d)/e)**2)/(e*sqrt(2*pi))', 
-                    p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+',C='+str(C0)+',d='+str(d0)+',e='+str(e0))
+    f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi))+ C* exp(-0.5*((x - d)/e)**2)/(e*sqrt(2*pi))+g', 
+                    p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+',C='+str(C0)+',d='+str(d0)+',e='+str(e0)+', g='+str(g0))
     f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+0.01, eydata = np.sqrt(data['Counts'][region[0]:region[1]]+0.01), xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
     f.fit()

@@ -2,10 +2,10 @@ import spinmob as s
 import mcphysics
 import numpy as np
 
-peaks = {'Ba': [[50, 130], [200, 300], [900, 1050]], 'Co': [325, 425], 'Na': [1250, 1600], 'Cs': [1625, 2000]}
+peaks = {'Ba': [[50, 130], [200, 300], [900, 1050]], 'Co': [335, 450], 'Na': [1250, 1600], 'Cs': [1625, 2000]}
 energy_dict = {'Ba': [30.973, 80.9979, 356.0129], 'Co': [122.0605, 136.47356], 'Cs': 661.657, 'Na': 511.0}
 gaussian_guesses = {'Ba': [{'A0': 100000, 'b0': 100, 'sigma0': 10, 'C0': 500}, {'A0': 100000, 'b0': 250, 'sigma0': 20, 'C0': 500}, {'A0': 100000, 'b0': 950, 'sigma0': 40, 'C0': 500}], 
-                    'Co': {'A0': 700000, 'b0': 355, 'sigma0': 20, 'C0': 10000, 'd0': 370, 'e0': 10, 'g0': 9000}, 
+                    'Co': {'A0': 700000, 'b0' : 360, 'sigma0' : 20, 'C0' : 0, 'd0' : 400, 'e0' : 10,'g0' : 5000}, 
                     'Cs': {'A0': 100000, 'b0': 1700, 'sigma0': 60, 'C0': 50}, 
                     'Na': {'A0': 100000, 'b0': 1400, 'sigma0': 50, 'C0': 50}}
 al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
@@ -29,10 +29,10 @@ def gaussian_fit(data, region, A0='', b0='', sigma0='', C0=''):
     """
     f = s.data.fitter() # initiate fitter object
     f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi)) + C', p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
-    f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]], eydata=np.sqrt(data['Counts'][region[0]:region[1]]+0.01), xlabel='Channel', ylabel='Counts')
+    f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+0.01, eydata=np.sqrt(np.abs(data['Counts'][region[0]:region[1]])+0.01), xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
     f.fit() # fit to data
-    param = np.array([f.get_fit_results()['A'], f.get_fit_results()['A.std'], f.get_fit_results()['b'], f.get_fit_results()['b.std'], f.get_fit_results()['sigma'], f.get_fit_results()['sigma.std']])
+    param = np.array([f.get_fit_results()['A'], f.get_fit_results()['A.std'], f.get_fit_results()['b'], f.get_fit_results()['b.std'], f.get_fit_results()['sigma'], f.get_fit_results()['sigma.std'], f.get_fit_results()['C'], f.get_fit_results()['C.std']])
     
     return param
 #__________________________________________________________________________________
@@ -59,15 +59,45 @@ def bimodal_fit(data, region, A0='', b0='', sigma0='', C0='', d0='', e0='', g0='
     f = s.data.fitter()
     f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi))+ C* exp(-0.5*((x - d)/e)**2)/(e*sqrt(2*pi))+g', 
                     p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+',C='+str(C0)+',d='+str(d0)+',e='+str(e0)+', g='+str(g0))
-    f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+0.01, eydata = np.sqrt(data['Counts'][region[0]:region[1]]+0.01), xlabel='Channel', ylabel='Counts')
+    f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+0.01, eydata = np.sqrt(np.abs(data['Counts'][region[0]:region[1]])+0.01), xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
     f.fit()
     param = np.array([f.get_fit_results()['A'], f.get_fit_results()['A.std'], f.get_fit_results()['b'], f.get_fit_results()['b.std'], f.get_fit_results()['sigma'], f.get_fit_results()['sigma.std'], 
-                    f.get_fit_results()['C'], f.get_fit_results()['C.std'], f.get_fit_results()['d'], f.get_fit_results()['d.std'], f.get_fit_results()['e'], f.get_fit_results()['e.std']])
+                    f.get_fit_results()['C'], f.get_fit_results()['C.std'], f.get_fit_results()['d'], f.get_fit_results()['d.std'], f.get_fit_results()['e'], f.get_fit_results()['e.std'], f.get_fit_results()['g'], f.get_fit_results()['g.std']])
+    return param
+#__________________________________________________________________________________
+def trimodal_fit(data, region, A0='', b0='', sigma0='', C0='', d0='', e0='', G0='', h0='', j0='', k0=''):
+    """ Function to fit double photopeak in compton scattering data.
+
+    Arguments
+    ---------
+    data:           spinmob databox;
+    regions:            array of ints, domain of peak under consideration;
+    A0 (optional):      float, initial guess for parameter A;
+    b0 (optional):      float, initial guess for parameter b;
+    sigma0 (optional):  float, initial guess for parameter sigma;
+    C0 (optional):      float, initial guess for parameter C;
+    d0 (optional):      float, initial guess for parameter d;
+    e0 (optional):      float, initial guess for parameter e;
+
+    Return
+    ------
+    param:              array of the bimodal fit parameters and uncertainties;
+
+    """
+    f = s.data.fitter()
+    f.set_functions(f = 'A * exp(-0.5*((x - b)/sigma)**2)/(sigma*sqrt(2*pi))+ C* exp(-0.5*((x - d)/e)**2)/(e*sqrt(2*pi))+G*exp(-0.5*((x - h)/j)**2)/(j*sqrt(2*pi))+k', 
+                    p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+',C='+str(C0)+',d='+str(d0)+',e='+str(e0)+', G='+str(G0)+',h='+str(h0)+',j='+str(j0)+',k='+str(k0))
+    f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]]+0.01, eydata = np.sqrt(np.abs(data['Counts'][region[0]:region[1]])+0.01), xlabel='Channel', ylabel='Counts')
+    f.set(plot_guess=False)
+    f.fit()
+    param = np.array([f.get_fit_results()['A'], f.get_fit_results()['A.std'], f.get_fit_results()['b'], f.get_fit_results()['b.std'], f.get_fit_results()['sigma'], f.get_fit_results()['sigma.std'], 
+                    f.get_fit_results()['C'], f.get_fit_results()['C.std'], f.get_fit_results()['d'], f.get_fit_results()['d.std'], f.get_fit_results()['e'], f.get_fit_results()['e.std'],
+                    f.get_fit_results()['G'], f.get_fit_results()['G.std'], f.get_fit_results()['h'], f.get_fit_results()['h.std'], f.get_fit_results()['j'], f.get_fit_results()['j.std'], f.get_fit_results()['k'], f.get_fit_results()['k.std']])
     return param
 #__________________________________________________________________________________
 
-def linear_fit(channel, channel_unc, energy):
+def inv_linear_fit(channel, channel_unc, energy):
     """ Fit a reciprocal linear function to data with uncertainties.
     Arguments
     ---------
@@ -125,22 +155,22 @@ def calibrate(n):
         element = data.headers['description'][0:2]
         if element == 'Ba':
             for j in range(0,3): # loop over all peaks of Barium
-                _, _, b, b_std, _, _ = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
+                _, _, b, b_std, _, _, _, _ = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
                 energy = np.append(energy, energy_dict[element][j])
                 channel = np.append(channel, b)
                 channel_unc = np.append(channel_unc, b_std) # width of peak
         elif element == 'Co':
-            _, _, b, b_std, _, _, _, _, d, d_std, _, _ = bimodal_fit(data, peaks[element], **gaussian_guesses[element]) # fit bimodal gaussian
+            _, _, b, b_std, _, _, _, _, d, d_std, _, _, _, _ = bimodal_fit(data, peaks[element], **gaussian_guesses[element]) # fit bimodal gaussian
             energy = np.append(energy, energy_dict[element])
             channel = np.append(channel, [b,d]) # peaks
             channel_unc = np.append(channel_unc, [b_std, d_std]) # width of peaks
         else:
-            _, _, b, b_std, _, _ = gaussian_fit(data, peaks[element], **gaussian_guesses[element]) # fit gaussian 
+            _, _, b, b_std, _, _, _, _ = gaussian_fit(data, peaks[element], **gaussian_guesses[element]) # fit gaussian 
             energy = np.append(energy, energy_dict[element])
             channel = np.append(channel, b)
             channel_unc = np.append(channel_unc, b_std) # width of peak
         
-    param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
+    param = inv_linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
     
     return param
 #__________________________________________________________________________________
@@ -203,7 +233,7 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], A0=400, b0=np.mean(al_peaks[angles[i]]), sigma0=30, C=5)
+            _, _, b, b_std, sigma, sigma_std, _, _ = gaussian_fit(data, al_peaks[angles[i]], A0=400, b0=np.mean(al_peaks[angles[i]]), sigma0=30, C0=5)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
             return
@@ -212,7 +242,7 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
         energy_unc[i] = np.sqrt(b**2*m_std**2 + m**2*b_std**2 + c_std**2)
 
     angles_int = np.array([int(angle) - 180 for angle in angles])
-    param = energy_fit(energy, energy_unc, angles_int)
+    param = energy_fit(energy, energy_unc, angles_int, lin)
 
     return param
 #__________________________________________________________________________________

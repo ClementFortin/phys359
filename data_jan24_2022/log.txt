@@ -1,0 +1,84 @@
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 75 degrees:
+  No Scatterer (Before)
+    121/180: Transferred file 1
+    122/180: Transferred file 31
+    123/180: Transferred file 23
+    124/180: Transferred file 12
+    125/180: Transferred file 28
+  Copper
+    126/180: Transferred file 17
+    127/180: Transferred file 14
+    128/180: Transferred file 9
+    129/180: Transferred file 35
+    130/180: Transferred file 28
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 85 degrees:
+  No Scatterer (Before)
+    131/180: Transferred file 23
+    132/180: Transferred file 12
+    133/180: Transferred file 19
+    134/180: Transferred file 6
+    135/180: Transferred file 32
+  Copper
+    136/180: Transferred file 39
+    137/180: Transferred file 27
+    138/180: Transferred file 34
+    139/180: Transferred file 33
+    140/180: Transferred file 8
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 95 degrees:
+  No Scatterer (Before)
+    141/180: Transferred file 6
+    142/180: Transferred file 19
+    143/180: Transferred file 33
+    144/180: Transferred file 3
+    145/180: Transferred file 18
+  Copper
+    146/180: Transferred file 13
+    147/180: Transferred file 9
+    148/180: Transferred file 14
+    149/180: Transferred file 11
+    150/180: Transferred file 29
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 105 degrees:
+  No Scatterer (Before)
+    151/180: Transferred file 8
+    152/180: Transferred file 20
+    153/180: Transferred file 36
+    154/180: Transferred file 13
+    155/180: Transferred file 5
+  Copper
+    156/180: Transferred file 9
+    157/180: Transferred file 19
+    158/180: Transferred file 5
+    159/180: Transferred file 22
+    160/180: Transferred file 34
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 125 degrees:
+  No Scatterer (Before)
+    161/180: Transferred file 6
+    162/180: Transferred file 2
+    163/180: Transferred file 27
+    164/180: Transferred file 1
+    165/180: Transferred file 26
+  Copper
+    166/180: Transferred file 3
+    167/180: Transferred file 8
+    168/180: Transferred file 27
+    169/180: Transferred file 29
+    170/180: Transferred file 25
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 135 degrees:
+  No Scatterer (Before)
+    171/180: Transferred file 17
+    172/180: Transferred file 5
+    173/180: Transferred file 18
+    174/180: Transferred file 25
+    175/180: Transferred file 21
+  Copper
+    176/180: Transferred file 34
+    177/180: Transferred file 4
+    178/180: Transferred file 13
+    179/180: Transferred file 22
+    180/180: Transferred file 2

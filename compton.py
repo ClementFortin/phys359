@@ -82,7 +82,7 @@ def three_gaussian_func(x, A, b, sigma, C, A1, b1, sigma1, A2, b2, sigma2):
 
 def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None, 
                  A1 = None, b1 = None, sigma1 = None, A2 = None, b2 = None,
-                 sigma2 = None, two_peaks = False, three_peaks = False, lin=False):
+                 sigma2 = None, two_peaks = False, three_peaks = False, lin=False, unc=None):
     """ Function to fit Gaussian to compton scattering data. 
     
     Parameters:
@@ -101,7 +101,10 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None
     param:              array of the gaussian fit parameters and uncertainties;  
     """
     f = s.data.fitter() # initiate fitter object
-    
+    if unc is None:
+        unc = np.sqrt(np.abs(data['Counts'][region[0]:region[1]])) + 1/10
+    else:
+        unc = unc[region[0]:region[1]]
     if two_peaks:
         f.set_functions(f = two_gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0)+', A1='+str(A1)+',b1='+str(b1)+',sigma1='+str(sigma1))
     elif three_peaks:
@@ -112,13 +115,13 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None
             f.set_functions(f = gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0)+', B='+str(B0))
         else:
             f.set_functions(f = gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
-
+    
     if region is None:
         f.set_data(xdata = data['Channel'], ydata = data['Counts'], 
-                   eydata = np.sqrt(np.abs(data['Counts'])) + 1/10, xlabel='Channel', ylabel='Counts')
+                   eydata = unc, xlabel='Channel', ylabel='Counts')
     else:
         f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]], 
-                   eydata = np.sqrt(np.abs(data['Counts'][region[0]:region[1]])) + 1/10, xlabel='Channel', ylabel='Counts')
+                   eydata = unc, xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
     f.fit() # fit to data
     A = f.get_fit_results()['A']
@@ -320,11 +323,11 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
     energy_unc = np.zeros(n)
     angles = []
     for i in range(0, n):
-        data = subtract_background() # combine files of the same angle and scatterer
+        data, unc = subtract_background() # combine files of the same angle and scatterer
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5)
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
             return
@@ -345,9 +348,10 @@ def subtract_background():
     """ Subtract background data of scattered data. Choose files which are of the same angle. """
     data = combine_chns()
     background = combine_chns()
+    unc = np.sqrt(data['Counts']+background['Counts'])
     data['Counts'] -= background['Counts']
 
-    return data
+    return data, unc
 #__________________________________________________________________________________
 
 

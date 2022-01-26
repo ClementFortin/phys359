@@ -12,9 +12,10 @@ gaussian_guesses = {'Ba': [{'A0': n*75000, 'b0': 100, 'sigma0': 10, 'C0': n*100}
                     'Na': {'A0': n*25000, 'b0': 1400, 'sigma0': 60, 'C0': n*100}}
 al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
 cu_peaks = {'75':[600, 800], '85':[650, 850], '95': [725, 900], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450]}
-sys_unc_channel = {'Ba': [1, 0.5, 5, 1], 'Co': [0.7, 5], 'Cs': 2, 'Na': 1}
-
-#__________________________________________________________________________________
+sys_unc_channel1 = {'Ba': [1, 0.5, 5, 1], 'Co': [0.7, 5], 'Cs': 2, 'Na': 1}
+sys_unc_channel2 = {'Ba': [(96.38-95.67)/2, (246.548-245.34)/2, (838.7-835.2)/2, (975.15-970.85)/2],'Co': [(355.41-354.452)/2, (394.64-393.53)/2],'Cs': (1760.22-1752.09)/2,'Na': (1374.52-1368.61)/2} # systematic coming from before and after calibrating data
+sys_unc_channel = {'Ba': [(1 + 96.38-95.67)/2, 0.5 + (246.548-245.34)/2, 5 + (838.7-835.2)/2, 1 + (975.15-970.85)/2],'Co': [0.7 + (355.41-354.452)/2, 5 + (394.64-393.53)/2],'Cs': 2 + (1760.22-1752.09)/2,'Na': 1 + (1374.52-1368.61)/2}
+ #__________________________________________________________________________________
 
 def gaussian_func(x, A, b, sigma, C, B=0):
     ''' Function that approximates the shape of the peak (Gaussian) and its background (polynomial)
@@ -102,7 +103,7 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None
     """
     f = s.data.fitter() # initiate fitter object
     if unc is None:
-        unc = np.sqrt(data['Counts'][region[0]:region[1]]) + 1/10
+        unc = np.sqrt(data['Counts'][region[0]:region[1]]) + 1/100
     else:
         unc = unc[region[0]:region[1]]
     if two_peaks:
@@ -200,7 +201,7 @@ def calibrate(n):
         data = combine_chns() # store combined databox 
         element = data.headers['description'][0:2]
         if element == 'Ba':
-            for j in range(0,3): # loop over all peaks of Barium
+            for j in range(1,3): # loop over all peaks of Barium
                 _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
                 if j == 0:
                     _, _, b, b_std, sigma, sigma_std, _, _ = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j], 
@@ -262,11 +263,11 @@ def energy_fit(energy, energy_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '661.6/(1 + 661.6/E*(1-cos(pi*x/180)))', p = 'E=511') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '661.6/(1 + 661.6/E*(1-cos(pi*x/t)))', p = 'E=511, t=180') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (KeV)$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['t'], f.get_fit_results()['t.std']] # fit parameters
      
     return param
 #__________________________________________________________________________________
@@ -284,11 +285,11 @@ def inv_energy_fit(energy, energy_unc, angle):
     param:      fit parameters of energy vs angle;
     """
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '1/661.6 + 1/E*(1-cos(pi*x/180))', p = 'E=511') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '1/661.6 + 1/E*(1-cos(pi*x/t))', p = 'E=511, t') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy**(-1), eydata = energy_unc * energy**(-2), xlabel='Angle (°)', ylabel='$Energy^{-1} (KeV^{-1})$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['t'], f.get_fit_results()['t.std']] # fit parameters
      
     return param
 #__________________________________________________________________________________
@@ -323,7 +324,9 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc)
+            _, _, b, b_std, _, _ = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc)
+        elif element == 'Cu':
+            _, _, b, b_std, _, _ = gaussian_fit(data, cu_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
             return
@@ -331,7 +334,7 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
         energy[i] = m*b+c 
         energy_unc[i] = np.sqrt(b**2*m_std**2 + m**2*(b_std + sys_unc_channel['Cs'])**2 + c_std**2) + 1
         
-    angles = np.array([int(angle) - 180 for angle in angles])
+    angles = np.array([int(angle) for angle in angles])
     if lin:
         param = energy_fit(energy, energy_unc, angles)
     else:

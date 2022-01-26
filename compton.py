@@ -11,7 +11,7 @@ gaussian_guesses = {'Ba': [{'A0': n*75000, 'b0': 100, 'sigma0': 10, 'C0': n*100}
                     'Cs': {'A0': n*12000, 'b0': 1700, 'sigma0': 60, 'C0': n*100}, 
                     'Na': {'A0': n*25000, 'b0': 1400, 'sigma0': 60, 'C0': n*100}}
 al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
-co_peaks = {'75':[600, 800], '85':[650, 850], '95': [725, 900], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450]}
+cu_peaks = {'75':[600, 800], '85':[650, 850], '95': [725, 900], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450]}
 sys_unc_channel = {'Ba': [1, 0.5, 5, 1], 'Co': [0.7, 5], 'Cs': 2, 'Na': 1}
 
 #__________________________________________________________________________________
@@ -102,7 +102,7 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None
     """
     f = s.data.fitter() # initiate fitter object
     if unc is None:
-        unc = np.sqrt(np.abs(data['Counts'][region[0]:region[1]])) + 1/10
+        unc = np.sqrt(data['Counts'][region[0]:region[1]]) + 1/10
     else:
         unc = unc[region[0]:region[1]]
     if two_peaks:
@@ -115,12 +115,8 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None
             f.set_functions(f = gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0)+', B='+str(B0))
         else:
             f.set_functions(f = gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
-    
-    if region is None:
-        f.set_data(xdata = data['Channel'], ydata = data['Counts'], 
-                   eydata = unc, xlabel='Channel', ylabel='Counts')
-    else:
-        f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]], 
+
+    f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]], 
                    eydata = unc, xlabel='Channel', ylabel='Counts')
     f.set(plot_guess=False)
     f.fit() # fit to data

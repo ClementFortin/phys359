@@ -2,20 +2,21 @@ import spinmob as s
 import mcphysics
 import numpy as np
 
-n = 12 # number of batch of 10-files for calibration data
+# n is the number of batch of 10-files calibration data
+n = 12
 peaks = {'Ba': [[75, 130], [220, 280], [700, 885], [900, 1050]], 'Co': [335, 450], 'Cs': [1600, 1900], 'Na': [1225, 1525]}
 energy_dict = {'Ba': [30.973, 80.9979, 302.8508, 356.0129], 'Co': [122.06065, 136.47356], 'Cs': 661.657, 'Na': 511.0}
 gaussian_guesses = {'Ba': [{'A0': n*75000, 'b0': 100, 'sigma0': 10, 'C0': n*100}, {'A0': 2*35000, 'b0': 250, 'sigma0': 20, 'C0': n*100}, {'A0': n*10000, 'b0': 820, 'sigma0': 50, 'C0': n*40},
-                           {'A0': 2*30000, 'b0': 950, 'sigma0': 40, 'C0': n*100}], 
-                    'Co': {'A0': n*720000, 'b0': 350, 'sigma0': 20, 'C0': n*100, 'A1': 2*5000, 'b1': 400, 'sigma1': 10}, 
+                           {'A0': n*30000, 'b0': 950, 'sigma0': 40, 'C0': n*100}], 
+                    'Co': {'A0': n*720000, 'b0': 350, 'sigma0': 20, 'C0': n*100, 'A1': n*5000, 'b1': 400, 'sigma1': 10}, 
                     'Cs': {'A0': n*12000, 'b0': 1700, 'sigma0': 60, 'C0': n*100}, 
                     'Na': {'A0': n*25000, 'b0': 1400, 'sigma0': 60, 'C0': n*100}}
-al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [650, 825]}
-cu_peaks = {'75':[600, 800], '85':[650, 850], '95': [725, 900], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450]}
-sys_unc_channel1 = {'Ba': [1, 0.5, 5, 1], 'Co': [0.7, 5], 'Cs': 2, 'Na': 1}
-sys_unc_channel2 = {'Ba': [(96.38-95.67)/2, (246.548-245.34)/2, (838.7-835.2)/2, (975.15-970.85)/2],'Co': [(355.41-354.452)/2, (394.64-393.53)/2],'Cs': (1760.22-1752.09)/2,'Na': (1374.52-1368.61)/2} # systematic coming from before and after calibrating data
+al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [640, 820]}
 sys_unc_channel = {'Ba': [(1 + 96.38-95.67)/2, 0.5 + (246.548-245.34)/2, 5 + (838.7-835.2)/2, 1 + (975.15-970.85)/2],'Co': [0.7 + (355.41-354.452)/2, 5 + (394.64-393.53)/2],'Cs': 2 + (1760.22-1752.09)/2,'Na': 1 + (1374.52-1368.61)/2}
- #__________________________________________________________________________________
+cu_peaks = {'75 ':[600, 790], '85 ':[650, 850], '95 ': [725, 925], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450]}
+
+#0.4 for the other one in Barium
+#__________________________________________________________________________________
 
 def gaussian_func(x, A, b, sigma, C, B=0):
     ''' Function that approximates the shape of the peak (Gaussian) and its background (polynomial)
@@ -60,7 +61,7 @@ def two_gaussian_func(x, A, b, sigma, C, A1, b1, sigma1):
 #__________________________________________________________________________________
 
 def three_gaussian_func(x, A, b, sigma, C, A1, b1, sigma1, A2, b2, sigma2):
-    ''' Function that approximates the shape of three peaks (Gaussian) and their background (constant)
+    ''' Function that approximates the shape of two peaks (Gaussian) and their background (constant)
     Parameters:
     ----------
     x: int, channel at which we're evaluating the function
@@ -81,9 +82,9 @@ def three_gaussian_func(x, A, b, sigma, C, A1, b1, sigma1, A2, b2, sigma2):
     return peak1 + peak2 + peak3 + background
 #__________________________________________________________________________________
 
-def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None, 
+def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=0, 
                  A1 = None, b1 = None, sigma1 = None, A2 = None, b2 = None,
-                 sigma2 = None, two_peaks = False, three_peaks = False, lin=False, unc=None):
+                 sigma2 = None, two_peaks = False, three_peaks = False, lin=False, unc = None):
     """ Function to fit Gaussian to compton scattering data. 
     
     Parameters:
@@ -103,22 +104,24 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None
     """
     f = s.data.fitter() # initiate fitter object
     if unc is None:
-        unc = np.sqrt(data['Counts'][region[0]:region[1]]) + 1/100
-    else:
-        unc = unc[region[0]:region[1]]
+        unc = np.sqrt(np.abs(data['Counts']))
+    
     if two_peaks:
         f.set_functions(f = two_gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0)+', A1='+str(A1)+',b1='+str(b1)+',sigma1='+str(sigma1))
+        
     elif three_peaks:
         f.set_functions(f = three_gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0)
                         +', A1='+str(A1)+',b1='+str(b1)+',sigma1='+str(sigma1)+', A2='+str(A2)+',b2='+str(b2)+',sigma2='+str(sigma2))
+
     else:
         if lin:
             f.set_functions(f = gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0)+', B='+str(B0))
         else:
             f.set_functions(f = gaussian_func, p = 'A='+str(A0)+',b='+str(b0)+',sigma='+str(sigma0)+', C='+str(C0))
-
+        
     f.set_data(xdata = data['Channel'][region[0]:region[1]], ydata = data['Counts'][region[0]:region[1]], 
-                   eydata = unc, xlabel='Channel', ylabel='Counts')
+                  eydata = unc[region[0]:region[1]] + 1/10000, xlabel='Channel', ylabel='Counts')
+    
     f.set(plot_guess=False)
     f.fit() # fit to data
     A = f.get_fit_results()['A']
@@ -133,7 +136,7 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=None
         b2 = f.get_fit_results()['b1']
         b2_std = f.get_fit_results()['b1.std']
         param = np.array([A, A_std, b, b_std, sigma, sigma_std, b2, b2_std])
-
+    
     if three_peaks:
         b2 = f.get_fit_results()['b1']
         b2_std = f.get_fit_results()['b1.std']
@@ -183,7 +186,7 @@ def combine_chns():
     return databox
 #__________________________________________________________________________________
 
-def calibrate(n):
+def calibrate(n, systematic=False):
     """ Find the linear fit parameters associated to the relationship between peak channel and energy by first finding the gaussian parameters associated to each peak.
     
     Argument
@@ -208,14 +211,20 @@ def calibrate(n):
                                                                           A1=n*25000, b1=94, sigma1=10, two_peaks=True) # fit two gaussians
                     energy = np.append(energy, energy_dict[element][j])
                     channel = np.append(channel, b)
-                    channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                    if systematic: # taking into account systematic uncertainties 
+                        channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                    else: 
+                        channel_unc = np.append(channel_unc, b_std ) # width of peak 
                     
                 if j == 1:
                     _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j], 
                                                                           B0 = -30, lin=True) # fit gaussian and linear background
                     energy = np.append(energy, energy_dict[element][j])
                     channel = np.append(channel, b)
-                    channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                    if systematic:
+                        channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                    else:
+                        channel_unc = np.append(channel_unc, b_std) # width of peak
                 
                 if j == 2:
                     _, _, b, b_std, sigma, sigma_std, b2, b2_std, _, _ = gaussian_fit(data, [peaks[element][2][0], peaks[element][3][1]], **gaussian_guesses['Ba'][3],
@@ -223,26 +232,36 @@ def calibrate(n):
                                       three_peaks=True) # fit two gaussian gaussian 
                     energy = np.append(energy, energy_dict[element][2])
                     channel = np.append(channel, b2)
-                    channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][2])
                     energy = np.append(energy, energy_dict[element][3])
                     channel = np.append(channel, b)
-                    channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][3])
+                    if systematic:
+                        channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][2])
+                        channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][3])
+                    else: 
+                        channel_unc = np.append(channel_unc, b2_std)
+                        channel_unc = np.append(channel_unc, b_std)
         
-
         elif element == 'Co':
             _, _, b, b_std, sigma, sigma_std, b2, b2_std = gaussian_fit(data, peaks[element], **gaussian_guesses[element], two_peaks=True) # fit gaussian 
             energy = np.append(energy, energy_dict[element][0])
             channel = np.append(channel, b)
             energy = np.append(energy, energy_dict[element][1])
             channel = np.append(channel, b2)
-            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][0]) # width of peak 
-            channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][1]) # width of peak 
+            if systematic:
+                channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][0]) # width of peak 
+                channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][1]) # width of peak 
+            else:
+                channel_unc = np.append(channel_unc, b_std) # width of peak 
+                channel_unc = np.append(channel_unc, b2_std) # width of peak 
 
         else:
             _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element], **gaussian_guesses[element], B0=0, lin=True) # fit gaussian 
             energy = np.append(energy, energy_dict[element])
             channel = np.append(channel, b)
-            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element]) # width of peak
+            if systematic:
+                channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element]) # width of peak
+            else: 
+                channel_unc = np.append(channel_unc, b_std) # width of peak
         
     param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
     
@@ -263,11 +282,11 @@ def energy_fit(energy, energy_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '661.6/(1 + 661.6/E*(1-cos(pi*x/t)))', p = 'E=511, t=180') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '661.6/(1 + 661.6/E*(1-cos(pi*(x-x0)/180)))', p = 'E=511, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (KeV)$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['t'], f.get_fit_results()['t.std']] # fit parameters
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
      
     return param
 #__________________________________________________________________________________
@@ -285,11 +304,11 @@ def inv_energy_fit(energy, energy_unc, angle):
     param:      fit parameters of energy vs angle;
     """
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '1/661.6 + 1/E*(1-cos(pi*x/t))', p = 'E=511, t') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '1/661.6 + 1/E*(1-cos(pi*(x-x0)/180))', p = 'E=511, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy**(-1), eydata = energy_unc * energy**(-2), xlabel='Angle (°)', ylabel='$Energy^{-1} (KeV^{-1})$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['t'], f.get_fit_results()['t.std']] # fit parameters
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
      
     return param
 #__________________________________________________________________________________
@@ -320,20 +339,23 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
     energy_unc = np.zeros(n)
     angles = []
     for i in range(0, n):
-        data, unc = subtract_background() # combine files of the same angle and scatterer
+        data, unc = subtract_background()  # combine files of the same angle and scatterer
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
-            _, _, b, b_std, _, _ = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc)
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc=unc)
         elif element == 'Cu':
-            _, _, b, b_std, _, _ = gaussian_fit(data, cu_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc)
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, cu_peaks[angles[i]], 400, np.mean(cu_peaks[angles[i]]), 30, 5, unc=unc)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
             return
         
         energy[i] = m*b+c 
-        energy_unc[i] = np.sqrt(b**2*m_std**2 + m**2*(b_std + sys_unc_channel['Cs'])**2 + c_std**2) + 1
+        energy_unc[i] = np.sqrt(b**2*m_std**2 + m**2*(b_std)**2 + c_std**2) + 1
         
+        # Do we need to add the systematic uncertainty for cesium to b_std
+        # to take into account the systematic uncertainties we had found for the calibration peak (shift and choice of background function)
+        # + sys_unc_channel['Cs']
     angles = np.array([int(angle) for angle in angles])
     if lin:
         param = energy_fit(energy, energy_unc, angles)
@@ -347,12 +369,11 @@ def subtract_background():
     """ Subtract background data of scattered data. Choose files which are of the same angle. """
     data = combine_chns()
     background = combine_chns()
-    unc = np.sqrt(data['Counts']+background['Counts'])
+    unc = np.sqrt(data['Counts'] + background['Counts'])
     data['Counts'] -= background['Counts']
 
-    return data, unc
+    return (data, unc)
 #__________________________________________________________________________________
-
 
 def get_sys_unc(n_regions):
     """ Estimate the systematic uncertainty in the location of our peaks by varying the 
@@ -400,8 +421,5 @@ def get_sys_unc(n_regions):
             distribution_b[i] = b
             
         sys_unc = np.std(distribution_b, ddof=1)
-    
             
     return sys_unc
-    
-    

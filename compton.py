@@ -11,10 +11,8 @@ gaussian_guesses = {'Ba': [{'A0': n*75000, 'b0': 100, 'sigma0': 10, 'C0': n*100}
                     'Co': {'A0': n*720000, 'b0': 350, 'sigma0': 20, 'C0': n*100, 'A1': n*5000, 'b1': 400, 'sigma1': 10}, 
                     'Cs': {'A0': n*12000, 'b0': 1700, 'sigma0': 60, 'C0': n*100}, 
                     'Na': {'A0': n*25000, 'b0': 1400, 'sigma0': 60, 'C0': n*100}}
-al_peaks = {'220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [640, 820]}
 sys_unc_channel = {'Ba': [(1 + 96.38-95.67)/2, 0.5 + (246.548-245.34)/2, 5 + (838.7-835.2)/2, 1 + (975.15-970.85)/2],'Co': [0.7 + (355.41-354.452)/2, 5 + (394.64-393.53)/2],'Cs': 2 + (1760.22-1752.09)/2,'Na': 1 + (1374.52-1368.61)/2}
-cu_peaks = {'75 ':[600, 790], '85 ':[650, 850], '95 ': [725, 925], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450]}
-
+el_peaks = {'75 ':[600, 790], '85 ':[650, 850], '95 ': [725, 925], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450], '220': [1250, 1500], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [640, 820]}
 #0.4 for the other one in Barium
 #__________________________________________________________________________________
 
@@ -282,8 +280,31 @@ def energy_fit(energy, energy_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '661.6/(1 + 661.6/E*(1-cos(pi*(x-x0)/180)))', p = 'E=511, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '661.657/(1 + 661.657/E*(1-cos(pi*(x-x0)/180)))', p = 'E=511, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (KeV)$') # supply the data
+    f.set(plot_guess=False)
+    f.fit() # make the fit    
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+     
+    return param
+#__________________________________________________________________________________
+
+def energy_chan_fit(chan, chan_unc, angle):
+    """ Fit function for the channel against angles.
+    Arguments
+    ---------
+    channel:     array, channel peaks
+    chan_unc: array, uncertainty in channel;
+    angle:      array, angle under consideration;
+    
+    Return
+    ------
+    param:      fit parameters of energy vs angle;
+    """
+
+    f = s.data.fitter() # create a fitter object
+    f.set_functions(f = 'A/(1 + A/E*(1-cos(pi*(x-x0)/180))) + B', p = 'A=1740, E=1000, x0 = 180, B = 50') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_data(xdata = angle, ydata = chan, eydata = chan_unc, xlabel='Angle (°)', ylabel='$Channel$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
     param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
@@ -313,7 +334,7 @@ def inv_energy_fit(energy, energy_unc, angle):
     return param
 #__________________________________________________________________________________
 
-def get_rest_mass(n, m, m_std, c, c_std, lin = True):
+def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False):
     """ Using the "energy_fit()" function above, fit the relation for energy against angle for angles selected. This function also requires background data to be selected 
     following the selection of a scatterer at a certain angle (background data must be at the same angle).
     Example for n=3 (fit for three different angles, say 220, 230, 240):
@@ -337,38 +358,45 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True):
     print('Select all files associated to one scattered and angle, for multiple angles.')
     energy = np.zeros(n)
     energy_unc = np.zeros(n)
+    chan = np.zeros(n)
+    chan_unc = np.zeros(n)
     angles = []
     for i in range(0, n):
         data, unc = subtract_background()  # combine files of the same angle and scatterer
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
-        if element == 'Al':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc=unc)
-        elif element == 'Cu':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, cu_peaks[angles[i]], 400, np.mean(cu_peaks[angles[i]]), 30, 5, unc=unc)
+        if element == 'Al' or element == 'Cu':
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, el_peaks[angles[i]], 400, np.mean(el_peaks[angles[i]]), 30, 5, unc=unc)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
-            return
-        
+            return        
+        chan[i] = b
+        chan_unc[i] = b_std
         energy[i] = m*b+c 
-        energy_unc[i] = np.sqrt(b**2*m_std**2 + m**2*(b_std)**2 + c_std**2) + 1
+        energy_unc[i] = np.sqrt(m**2*(b_std)**2) + 1/1000
         
         # Do we need to add the systematic uncertainty for cesium to b_std
         # to take into account the systematic uncertainties we had found for the calibration peak (shift and choice of background function)
         # + sys_unc_channel['Cs']
     angles = np.array([int(angle) for angle in angles])
-    if lin:
-        param = energy_fit(energy, energy_unc, angles)
+    if chan_fit:
+        param = energy_chan_fit(chan, chan_unc, angles)
     else:
-        param = inv_energy_fit(energy, energy_unc, angles)
+        if lin:
+            param = energy_fit(energy, energy_unc, angles)
+        else:
+            param = inv_energy_fit(energy, energy_unc, angles)
 
     return param
 #__________________________________________________________________________________
 
-def subtract_background():
+def subtract_background(paths=None):
     """ Subtract background data of scattered data. Choose files which are of the same angle. """
-    data = combine_chns()
-    background = combine_chns()
+    if paths is None:
+        data = combine_chns()
+        background = combine_chns()
+    else:
+        data = mcphysics.load
     unc = np.sqrt(data['Counts'] + background['Counts'])
     data['Counts'] -= background['Counts']
 

@@ -1,0 +1,196 @@
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 55 degrees:
+  Aluminum
+    301/480: Transferred file 5
+    302/480: Transferred file 27
+    303/480: Transferred file 28
+    304/480: Transferred file 18
+    305/480: Transferred file 22
+  Copper
+    306/480: Transferred file 36
+    307/480: Transferred file 26
+    308/480: Transferred file 6
+    309/480: Transferred file 21
+    310/480: Transferred file 22
+  No Scatterer (Before)
+    311/480: Transferred file 31
+    312/480: Transferred file 19
+    313/480: Transferred file 23
+    314/480: Transferred file 17
+    315/480: Transferred file 28
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 65 degrees:
+  Aluminum
+    316/480: Transferred file 32
+    317/480: Transferred file 23
+    318/480: Transferred file 37
+    319/480: Transferred file 35
+    320/480: Transferred file 5
+  Copper
+    321/480: Transferred file 32
+    322/480: Transferred file 38
+    323/480: Transferred file 36
+    324/480: Transferred file 9
+    325/480: Transferred file 7
+  No Scatterer (Before)
+    326/480: Transferred file 34
+    327/480: Transferred file 39
+    328/480: Transferred file 10
+    329/480: Transferred file 17
+    330/480: Transferred file 35
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 300 degrees:
+  Aluminum
+    331/480: Transferred file 7
+    332/480: Transferred file 32
+    333/480: Transferred file 11
+    334/480: Transferred file 16
+    335/480: Transferred file 12
+  Copper
+    336/480: Transferred file 15
+    337/480: Transferred file 28
+    338/480: Transferred file 13
+    339/480: Transferred file 1
+    340/480: Transferred file 32
+  No Scatterer (Before)
+    341/480: Transferred file 18
+    342/480: Transferred file 37
+    343/480: Transferred file 30
+    344/480: Transferred file 29
+    345/480: Transferred file 6
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 310 degrees:
+  Aluminum
+    346/480: Transferred file 3
+    347/480: Transferred file 7
+    348/480: Transferred file 29
+    349/480: Transferred file 2
+    350/480: Transferred file 20
+  Copper
+    351/480: Transferred file 6
+    352/480: Transferred file 17
+    353/480: Transferred file 4
+    354/480: Transferred file 27
+    355/480: Transferred file 3
+  No Scatterer (Before)
+    356/480: Transferred file 26
+    357/480: Transferred file 36
+    358/480: Transferred file 28
+    359/480: Transferred file 5
+    360/480: Transferred file 14
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 55 degrees:
+  No Scatterer (Before)
+    361/480: Transferred file 27
+    362/480: Transferred file 2
+    363/480: Transferred file 7
+    364/480: Transferred file 13
+    365/480: Transferred file 37
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 65 degrees:
+  No Scatterer (Before)
+    366/480: Transferred file 5
+    367/480: Transferred file 6
+    368/480: Transferred file 4
+    369/480: Transferred file 3
+    370/480: Transferred file 8
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 300 degrees:
+  No Scatterer (Before)
+    371/480: Transferred file 17
+    372/480: Transferred file 28
+    373/480: Transferred file 13
+    374/480: Transferred file 24
+    375/480: Transferred file 16
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 310 degrees:
+  No Scatterer (Before)
+    376/480: Transferred file 30
+    377/480: Transferred file 24
+    378/480: Transferred file 10
+    379/480: Transferred file 37
+    380/480: Transferred file 25
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 125 degrees:
+  Copper
+    381/480: Transferred file 33
+    382/480: Transferred file 32
+    383/480: Transferred file 16
+    384/480: Transferred file 0
+    385/480: Transferred file 1
+  No Scatterer (Before)
+    386/480: Transferred file 21
+    387/480: Transferred file 11
+    388/480: Transferred file 24
+    389/480: Transferred file 33
+    390/480: Transferred file 39
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 135 degrees:
+  Copper
+    391/480: Transferred file 6
+    392/480: Transferred file 27
+    393/480: Transferred file 28
+    394/480: Transferred file 5
+    395/480: Transferred file 11
+  No Scatterer (Before)
+    396/480: Transferred file 38
+    397/480: Transferred file 22
+    398/480: Transferred file 24
+    399/480: Transferred file 26
+    400/480: Transferred file 15
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 220 degrees:
+  Copper
+    401/480: Transferred file 4
+    402/480: Transferred file 15
+    403/480: Transferred file 3
+    404/480: Transferred file 21
+    405/480: Transferred file 29
+  No Scatterer (Before)
+    406/480: Transferred file 36
+    407/480: Transferred file 2
+    408/480: Transferred file 17
+    409/480: Transferred file 37
+    410/480: Transferred file 11
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 230 degrees:
+  Copper
+    411/480: Transferred file 29
+    412/480: Transferred file 19
+    413/480: Transferred file 21
+    414/480: Transferred file 32
+    415/480: Transferred file 38
+  No Scatterer (Before)
+    416/480: Transferred file 12
+    417/480: Transferred file 35
+    418/480: Transferred file 20
+    419/480: Transferred file 10
+    420/480: Transferred file 13
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 125 degrees:
+  Aluminum
+    421/480: Transferred file 13
+    422/480: Transferred file 22
+    423/480: Transferred file 25
+    424/480: Transferred file 30
+    425/480: Transferred file 35
+  No Scatterer (Before)
+    426/480: Transferred file 4
+    427/480: Transferred file 35
+    428/480: Transferred file 30
+    429/480: Transferred file 36
+    430/480: Transferred file 5
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 135 degrees:
+  Aluminum
+    431/480: Transferred file 23
+    432/480: Transferred file 26
+    433/480: Transferred file 6
+    434/480: Transferred file 39
+    435/480: Transferred file 14
+  No Scatterer (Before)
+    436/480: Transferred file 4
+    437/480: Transferred file 30
+    438/480: Transferred file 13
+    439/480: Transferred file 27
+    440/480: Transferred file 33

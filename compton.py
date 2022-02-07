@@ -1,6 +1,7 @@
 import spinmob as s
 import mcphysics
 import numpy as np
+import matplotlib.pyplot as plt
 
 # n is the number of batch of 10-files calibration data
 n = 12
@@ -78,6 +79,22 @@ def three_gaussian_func(x, A, b, sigma, C, A1, b1, sigma1, A2, b2, sigma2):
     background = C
     
     return peak1 + peak2 + peak3 + background
+
+#__________________________________________________________________________________
+
+def linear_func(x, m, b):
+    """Reciprocal of a linear function"""
+    return x/m - b/m
+#__________________________________________________________________________________
+
+def compton_kev_func(x, x0, E):
+    """"Energy compton function"""
+    return 661.657/(1 + 661.657/E*(1-np.cos(np.pi*(x-x0)/180)))
+#__________________________________________________________________________________
+
+def compton_chan_func(x, x0, E):
+    """"Energy compton function"""
+    return 1756.1/(1 + 1756.1/E*(1-np.cos(np.pi*(x-x0)/180)))
 #__________________________________________________________________________________
 
 def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=0, 
@@ -131,9 +148,15 @@ def gaussian_fit(data, region, A0=None, b0=None, sigma0=None, C0 = None, B0=0,
     param = np.array([A, A_std, b, b_std, sigma, sigma_std])
     
     if two_peaks:
-        b2 = f.get_fit_results()['b1']
-        b2_std = f.get_fit_results()['b1.std']
-        param = np.array([A, A_std, b, b_std, sigma, sigma_std, b2, b2_std])
+        A1 = f.get_fit_results()['A1']
+        A1_std = f.get_fit_results()['A1.std']
+        b1 = f.get_fit_results()['b1']
+        b1_std = f.get_fit_results()['b1.std']
+        sigma1 = f.get_fit_results()['sigma1']
+        sigma1_std = f.get_fit_results()['sigma1.std']
+        C = f.get_fit_results()['C']
+        C_std = f.get_fit_results()['C.std']
+        param = np.array([A, A_std, b, b_std, sigma, sigma_std, A1, A1_std, b1, b1_std, sigma1, sigma1_std, C, C_std])
     
     if three_peaks:
         b2 = f.get_fit_results()['b1']
@@ -157,7 +180,7 @@ def linear_fit(channel, channel_unc, energy):
     param:          array of the linear fit parameters and uncertainties;
     """
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = 'x/m - b/m', p = 'm, b') # set the function as the reciprocal of a linear function
+    f.set_functions(f = linear_func, p = 'm, b') # set the function as the reciprocal of a linear function
     f.set_data(xdata = energy, ydata = channel, eydata = channel_unc, xlabel='Energy (KeV)', ylabel='Channel') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit
@@ -184,7 +207,7 @@ def combine_chns():
     return databox
 #__________________________________________________________________________________
 
-def calibrate(n, systematic=False):
+def calibrate(n, fit=True, systematic=False):
     """ Find the linear fit parameters associated to the relationship between peak channel and energy by first finding the gaussian parameters associated to each peak.
     
     Argument
@@ -240,7 +263,7 @@ def calibrate(n, systematic=False):
                         channel_unc = np.append(channel_unc, b_std)
         
         elif element == 'Co':
-            _, _, b, b_std, sigma, sigma_std, b2, b2_std = gaussian_fit(data, peaks[element], **gaussian_guesses[element], two_peaks=True) # fit gaussian 
+            _, _, b, b_std, sigma, sigma_std, _, _, b2, b2_std, _, _, _, _ = gaussian_fit(data, peaks[element], **gaussian_guesses[element], two_peaks=True) # fit gaussian 
             energy = np.append(energy, energy_dict[element][0])
             channel = np.append(channel, b)
             energy = np.append(energy, energy_dict[element][1])
@@ -260,10 +283,11 @@ def calibrate(n, systematic=False):
                 channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element]) # width of peak
             else: 
                 channel_unc = np.append(channel_unc, b_std) # width of peak
-        
-    param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
-    
-    return param
+    if fit:    
+        param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
+        return param
+    else:
+        return channel, channel_unc, energy
 #__________________________________________________________________________________
 
 def energy_fit(energy, energy_unc, angle):
@@ -284,7 +308,7 @@ def energy_fit(energy, energy_unc, angle):
     f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (KeV)$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
      
     return param
 #__________________________________________________________________________________
@@ -293,8 +317,8 @@ def energy_chan_fit(chan, chan_unc, angle):
     """ Fit function for the channel against angles.
     Arguments
     ---------
-    channel:     array, channel peaks
-    chan_unc: array, uncertainty in channel;
+    channel:    array, channel peaks
+    chan_unc:   array, uncertainty in channel;
     angle:      array, angle under consideration;
     
     Return
@@ -303,11 +327,11 @@ def energy_chan_fit(chan, chan_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = 'A/(1 + A/E*(1-cos(pi*(x-x0)/180))) + B', p = 'A=1740, E=1000, x0 = 180, B = 50') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '1756.1/(1 + 1756.1/E*(1-cos(pi*(x-x0)/180)))', p = 'E=1350, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = chan, eydata = chan_unc, xlabel='Angle (°)', ylabel='$Channel$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
      
     return param
 #__________________________________________________________________________________
@@ -334,7 +358,7 @@ def inv_energy_fit(energy, energy_unc, angle):
     return param
 #__________________________________________________________________________________
 
-def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False):
+def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False, fit=True):
     """ Using the "energy_fit()" function above, fit the relation for energy against angle for angles selected. This function also requires background data to be selected 
     following the selection of a scatterer at a certain angle (background data must be at the same angle).
     Example for n=3 (fit for three different angles, say 220, 230, 240):
@@ -379,15 +403,20 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False):
         # to take into account the systematic uncertainties we had found for the calibration peak (shift and choice of background function)
         # + sys_unc_channel['Cs']
     angles = np.array([int(angle) for angle in angles])
-    if chan_fit:
-        param = energy_chan_fit(chan, chan_unc, angles)
-    else:
-        if lin:
-            param = energy_fit(energy, energy_unc, angles)
+    if fit: # plot energy
+        if chan_fit:
+            param = energy_chan_fit(chan, chan_unc, angles)
         else:
-            param = inv_energy_fit(energy, energy_unc, angles)
-
-    return param
+            if lin:
+                param = energy_fit(energy, energy_unc, angles)
+            else:
+                param = inv_energy_fit(energy, energy_unc, angles)
+        return param
+    else:
+        if chan_fit:
+            return angles, chan, chan_unc
+        else:
+            return angles, energy, energy_unc
 #__________________________________________________________________________________
 
 def subtract_background(paths=None):
@@ -451,3 +480,76 @@ def get_sys_unc(n_regions):
         sys_unc = np.std(distribution_b, ddof=1)
             
     return sys_unc
+#__________________________________________________________________________________
+
+def plot_calibration(n, systematic=True):
+    """Plot calibration using specified format."""
+    channel, channel_unc, energy = calibrate(n, systematic=systematic, fit=False)
+    param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
+    plt.close() # close automatically generated plot from linear_fit() function
+    # Making the plot
+    extended_energy = np.linspace(min(energy)-50,max(energy)+50)
+    fig1 = plt.figure(1)
+    frame1=fig1.add_axes((.1,.3,.8,.6))
+    plt.errorbar(energy, channel, yerr=channel_unc, fmt="o", label="Data")
+    plt.plot(extended_energy, linear_func(extended_energy, param[0], param[2]), color='red', linestyle="-", label='Linear fit') # best estimate for linear fit
+    plt.ylabel('Channel', Fontsize=18)
+    plt.xlim(50, 700)
+    plt.legend(loc="lower right", fontsize=16)
+    plt.yticks(fontsize=14)
+    frame1.set_xticklabels([]) #Remove x-tic labels for the first frame
+    plt.grid()
+    #Residual plot
+    frame2=fig1.add_axes((.1,.1,.8,.2)) 
+    plt.errorbar(energy, (channel-linear_func(energy, param[0], param[2]))/channel_unc, yerr=channel_unc/channel_unc, fmt='o', color='blue', alpha=0.75, zorder=0)
+    plt.xlabel('Energy (keV)', Fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.ylabel('Studentized \n Residuals', Fontsize=18, labelpad=0)
+    plt.xlim(50, 699)
+    plt.ylim(-4,4)
+    plt.yticks([-2,0,2])
+    plt.hlines(0, 50, 700, color='red', linewidth=1, zorder=5)
+    plt.grid()
+#__________________________________________________________________________________
+def plot_energy_angle(n, m, m_std, c, c_std, chan_fit=False):
+    """Plot energy against angle to obtain a value for the rest mass energy"""
+    
+    angles, ydata, ydata_unc = get_rest_mass(n, m, m_std, c, c_std, lin=True, chan_fit=chan_fit, fit=False) # retrieve angles, energy and unc from rest mass function
+    # obtain fit parameters
+    if chan_fit:
+        param = energy_chan_fit(ydata, ydata_unc, angles)
+    else:
+        param = energy_fit(ydata, ydata_unc, angles)
+    plt.close() # close plot from fit
+    extended_angles = np.linspace(min(angles)-10, max(angles)+10)
+    fig1 = plt.figure(1)
+    frame1=fig1.add_axes((.1,.3,.8,.6))
+    plt.errorbar(angles-param[2], y=ydata, yerr=ydata_unc, fmt="o", label="Data")
+    if chan_fit:
+        plt.plot(extended_angles-param[2], compton_chan_func(extended_angles, param[2], param[0]), color='red', linestyle="-", label='Compton law fit') # best estimate for linear fit
+        plt.ylabel('Channel', Fontsize=18)
+    else:
+        plt.errorbar(angles-param[2], (ydata-compton_kev_func(angles, param[2], param[0]))/ydata_unc, yerr=ydata_unc/ydata_unc, fmt='o', color='blue', alpha=0.75, zorder=0)
+        plt.ylabel('Energy (keV)', Fontsize=18)
+    plt.xlim(extended_angles[0]-param[2], extended_angles[-1]-param[2])
+    plt.legend(loc="upper right", fontsize=16)
+    plt.yticks(fontsize=14)
+    frame1.set_xticklabels([]) #Remove x-tic labels for the first frame
+    plt.grid()
+    #Residual plot
+    frame2=fig1.add_axes((.1,.1,.8,.2))
+    if chan_fit:
+        plt.errorbar(angles-param[2], (ydata-compton_chan_func(angles, param[2], param[0]))/ydata_unc, yerr=ydata_unc/ydata_unc, fmt='o', color='blue', alpha=0.75, zorder=0)
+    else:
+        plt.errorbar(angles-param[2], (ydata-compton_kev_func(angles, param[2], param[0]))/ydata_unc, yerr=ydata_unc/ydata_unc, fmt='o', color='blue', alpha=0.75, zorder=0)
+    plt.xlabel('Angles (°)', Fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.ylabel('Studentized \n Residuals', Fontsize=18, labelpad=0)
+    plt.xlim(extended_angles[0]-param[2], extended_angles[-1]-param[2])
+    #plt.ylim(-4,4)
+    plt.yticks([-20,-10,0,10])
+    plt.ylim(-20,20)
+    plt.hlines(0, extended_angles[0]-param[2], extended_angles[-1]-param[2], color='red', linewidth=1, zorder=5)
+    plt.grid()

@@ -1,0 +1,210 @@
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 55 degrees:
+  Aluminum
+    441/661: Transferred file 4
+    442/661: Transferred file 23
+    443/661: Transferred file 3
+    444/661: Transferred file 2
+    445/661: Transferred file 35
+  No Scatterer (Before)
+    446/661: Transferred file 3
+    447/661: Transferred file 6
+    448/661: Transferred file 4
+    449/661: Transferred file 29
+    450/661: Transferred file 22
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 65 degrees:
+  Aluminum
+    451/661: Transferred file 4
+    452/661: Transferred file 6
+    453/661: Transferred file 22
+    454/661: Transferred file 34
+    455/661: Transferred file 12
+  No Scatterer (Before)
+    456/661: Transferred file 2
+    457/661: Transferred file 16
+    458/661: Transferred file 13
+    459/661: Transferred file 9
+    460/661: Transferred file 28
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 75 degrees:
+  Aluminum
+    461/661: Transferred file 25
+    462/661: Transferred file 10
+    463/661: Transferred file 23
+    464/661: Transferred file 33
+    465/661: Transferred file 13
+  No Scatterer (Before)
+    466/661: Transferred file 27
+    467/661: Transferred file 7
+    468/661: Transferred file 13
+    469/661: Transferred file 26
+    470/661: Transferred file 34
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 85 degrees:
+  Aluminum
+    471/661: Transferred file 24
+    472/661: Transferred file 10
+    473/661: Transferred file 11
+    474/661: Transferred file 37
+    475/661: Transferred file 7
+  No Scatterer (Before)
+    476/661: Transferred file 14
+    477/661: Transferred file 9
+    478/661: Transferred file 3
+    479/661: Transferred file 13
+    480/661: Transferred file 33
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 95 degrees:
+  Aluminum
+    481/661: Transferred file 38
+    482/661: Transferred file 14
+    483/661: Transferred file 37
+    484/661: Transferred file 32
+    485/661: Transferred file 20
+  No Scatterer (Before)
+    486/661: Transferred file 29
+    487/661: Transferred file 31
+    488/661: Transferred file 16
+    489/661: Transferred file 23
+    490/661: Transferred file 39
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 105 degrees:
+  Aluminum
+    491/661: Transferred file 18
+    492/661: Transferred file 12
+    493/661: Transferred file 38
+    494/661: Transferred file 13
+    495/661: Transferred file 32
+  No Scatterer (Before)
+    496/661: Transferred file 0
+    497/661: Transferred file 19
+    498/661: Transferred file 38
+    499/661: Transferred file 4
+    500/661: Transferred file 15
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 300 degrees:
+  Aluminum
+    501/661: Transferred file 14
+    502/661: Transferred file 1
+    503/661: Transferred file 26
+    504/661: Transferred file 5
+    505/661: Transferred file 0
+  No Scatterer (Before)
+    506/661: Transferred file 14
+    507/661: Transferred file 3
+    508/661: Transferred file 11
+    509/661: Transferred file 25
+    510/661: Transferred file 19
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 310 degrees:
+  Aluminum
+    511/661: Transferred file 34
+    512/661: Transferred file 27
+    513/661: Transferred file 22
+    514/661: Transferred file 21
+    515/661: Transferred file 35
+  No Scatterer (Before)
+    516/661: Transferred file 34
+    517/661: Transferred file 38
+    518/661: Transferred file 22
+    519/661: Transferred file 18
+    520/661: Transferred file 29
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 55 degrees:
+  No Scatterer (Before)
+    521/661: Transferred file 32
+    522/661: Transferred file 21
+    523/661: Transferred file 38
+    524/661: Transferred file 30
+    525/661: Transferred file 39
+  Copper
+    526/661: Transferred file 28
+    527/661: Transferred file 29
+    528/661: Transferred file 14
+    529/661: Transferred file 31
+    530/661: Transferred file 16
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 65 degrees:
+  No Scatterer (Before)
+    531/661: Transferred file 24
+    532/661: Transferred file 29
+    533/661: Transferred file 15
+    534/661: Transferred file 31
+    535/661: Transferred file 37
+  Copper
+    536/661: Transferred file 8
+    537/661: Transferred file 34
+    538/661: Transferred file 6
+    539/661: Transferred file 37
+    540/661: Transferred file 24
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 75 degrees:
+  No Scatterer (Before)
+    541/661: Transferred file 38
+    542/661: Transferred file 18
+    543/661: Transferred file 6
+    544/661: Transferred file 30
+    545/661: Transferred file 14
+  Copper
+    546/661: Transferred file 27
+    547/661: Transferred file 12
+    548/661: Transferred file 21
+    549/661: Transferred file 34
+    550/661: Transferred file 38
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 85 degrees:
+  No Scatterer (Before)
+    551/661: Transferred file 30
+    552/661: Transferred file 27
+    553/661: Transferred file 36
+    554/661: Transferred file 0
+    555/661: Transferred file 31
+  Copper
+    556/661: Transferred file 9
+    557/661: Transferred file 7
+    558/661: Transferred file 11
+    559/661: Transferred file 29
+    560/661: Transferred file 31
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 95 degrees:
+  No Scatterer (Before)
+    561/661: Transferred file 35
+    562/661: Transferred file 28
+    563/661: Transferred file 36
+    564/661: Transferred file 14
+    565/661: Transferred file 34
+  Copper
+    566/661: Transferred file 39
+    567/661: Transferred file 35
+    568/661: Transferred file 16
+    569/661: Transferred file 27
+    570/661: Transferred file 21
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 300 degrees:
+  No Scatterer (Before)
+    571/661: Transferred file 32
+    572/661: Transferred file 33
+    573/661: Transferred file 31
+    574/661: Transferred file 23
+    575/661: Transferred file 7
+  Copper
+    576/661: Transferred file 18
+    577/661: Transferred file 36
+    578/661: Transferred file 26
+    579/661: Transferred file 27
+    580/661: Transferred file 35
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 310 degrees:
+  No Scatterer (Before)
+    581/661: Transferred file 16
+    582/661: Transferred file 35
+    583/661: Transferred file 1
+    584/661: Transferred file 39
+    585/661: Transferred file 27
+  Copper
+    586/661: Transferred file 33
+    587/661: Transferred file 38
+    588/661: Transferred file 12
+    589/661: Transferred file 13
+    590/661: Transferred file 10

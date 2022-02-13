@@ -1,0 +1,112 @@
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 75 degrees:
+  Aluminum
+    221/300: Transferred file 9
+    222/300: Transferred file 32
+    223/300: Transferred file 0
+    224/300: Transferred file 30
+    225/300: Transferred file 38
+  No Scatterer (Before)
+    226/300: Transferred file 3
+    227/300: Transferred file 32
+    228/300: Transferred file 0
+    229/300: Transferred file 9
+    230/300: Transferred file 22
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 85 degrees:
+  Aluminum
+    231/300: Transferred file 9
+    232/300: Transferred file 23
+    233/300: Transferred file 39
+    234/300: Transferred file 16
+    235/300: Transferred file 15
+  No Scatterer (Before)
+    236/300: Transferred file 5
+    237/300: Transferred file 38
+    238/300: Transferred file 17
+    239/300: Transferred file 10
+    240/300: Transferred file 16
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 95 degrees:
+  Aluminum
+    241/300: Transferred file 30
+    242/300: Transferred file 35
+    243/300: Transferred file 6
+    244/300: Transferred file 12
+    245/300: Transferred file 9
+  No Scatterer (Before)
+    246/300: Transferred file 11
+    247/300: Transferred file 22
+    248/300: Transferred file 37
+    249/300: Transferred file 2
+    250/300: Transferred file 30
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 105 degrees:
+  Aluminum
+    251/300: Transferred file 28
+    252/300: Transferred file 15
+    253/300: Transferred file 1
+    254/300: Transferred file 25
+    255/300: Transferred file 20
+  No Scatterer (Before)
+    256/300: Transferred file 21
+    257/300: Transferred file 2
+    258/300: Transferred file 18
+    259/300: Transferred file 30
+    260/300: Transferred file 1
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 240 degrees:
+  Copper
+    261/300: Transferred file 10
+    262/300: Transferred file 4
+    263/300: Transferred file 29
+    264/300: Transferred file 14
+    265/300: Transferred file 18
+  No Scatterer (Before)
+    266/300: Transferred file 4
+    267/300: Transferred file 12
+    268/300: Transferred file 38
+    269/300: Transferred file 36
+    270/300: Transferred file 10
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 250 degrees:
+  Copper
+    271/300: Transferred file 13
+    272/300: Transferred file 17
+    273/300: Transferred file 30
+    274/300: Transferred file 8
+    275/300: Transferred file 4
+  No Scatterer (Before)
+    276/300: Transferred file 20
+    277/300: Transferred file 27
+    278/300: Transferred file 25
+    279/300: Transferred file 19
+    280/300: Transferred file 28
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 260 degrees:
+  Copper
+    281/300: Transferred file 14
+    282/300: Transferred file 30
+    283/300: Transferred file 8
+    284/300: Transferred file 4
+    285/300: Transferred file 6
+  No Scatterer (Before)
+    286/300: Transferred file 38
+    287/300: Transferred file 31
+    288/300: Transferred file 11
+    289/300: Transferred file 21
+    290/300: Transferred file 8
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 280 degrees:
+  Copper
+    291/300: Transferred file 24
+    292/300: Transferred file 32
+    293/300: Transferred file 39
+    294/300: Transferred file 22
+    295/300: Transferred file 38
+  No Scatterer (Before)
+    296/300: Transferred file 2
+    297/300: Transferred file 12
+    298/300: Transferred file 29
+    299/300: Transferred file 6
+    300/300: Transferred file 31

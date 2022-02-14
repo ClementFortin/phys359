@@ -14,9 +14,9 @@ gaussian_guesses = {'Ba': [{'A0': n*75000, 'b0': 100, 'sigma0': 10, 'C0': n*100}
                     'Cs': {'A0': n*12000, 'b0': 1700, 'sigma0': 60, 'C0': n*100},
                     'Na': {'A0': n*25000, 'b0': 1400, 'sigma0': 60, 'C0': n*100}}
 sys_unc_channel = {'Ba': [(1 + 96.38-95.67)/2, 0.5 + (246.548-245.34)/2, 5 + (838.7-835.2)/2, 1 + (975.15-970.85)/2],'Co': [0.7 + (355.41-354.452)/2, 5 + (394.64-393.53)/2],'Cs': 2 + (1760.22-1752.09)/2,'Na': 1 + (1374.52-1368.61)/2}
-al_peaks = {'55 ': (512, 701), '65 ': (547, 748), '75 ': (566, 813), '85 ': (634, 857), '95 ': (697, 949), '105': (754, 1066), '125': (970, 1304), '135': (1094, 1450), '220': (1176, 1545), '230': (1033, 1410), '240': (912, 1289), '250': (826, 1133), '260': (737, 1026), '280': (613, 843), '300': (540, 724), '310': (494, 691)}
+new_al_peaks = {'15 ': (373, 506), '25 ': (379, 522), '35 ': (412, 536), '45 ': (420, 576), '85 ': (584, 805), '125': (911, 1229), '135': (1036, 1354), '145': (1137, 1448), '190': (1038, 1370), '200': (957, 1262), '220': (748, 1033), '260': (495, 676), '300': (382, 526), '310': (371, 501), '320': (354, 485)}
 cu_peaks = {'55 ': (510, 704), '65 ': (524, 765), '75 ': (567, 816), '85 ': (619, 877), '95 ': (687, 962), '105': (768, 1051), '125': (950, 1314), '135': (1080, 1465), '220': (1171, 1551), '230': (1009, 1430), '240': (918, 1287), '250': (827, 1136), '260': (755, 1016), '280': (619, 836), '300': (512, 744), '310': (469, 710)}
-el_peaks = {'55 ': [525, 700], '65 ': [550, 750], '75 ':[600, 790], '85 ':[650, 850], '95 ': [725, 925], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450], '220': [1200, 1550], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [640, 820], '300': [500, 750], '310':[500, 775]}
+al_peaks = {'55 ': [525, 700], '65 ': [550, 750], '75 ':[600, 790], '85 ':[650, 850], '95 ': [725, 925], '105':[800, 1025], '125':[975, 1300], '135':[1100, 1450], '220': [1200, 1550], '230': [1050, 1400], '240': [950, 1250], '250': [850,1100], '260': [750, 1000], '280': [640, 820], '300': [500, 750], '310':[500, 775]}
 chan_data = np.array([
     [   55.        ,   606.5848648 ,     0.66363029,    7790.,  330.], # [angle | peak channel | peak channel unc | total counts | total counts unc]
     [   65.        ,   645.46423482,     0.75686856,    7610.,  330.],
@@ -252,7 +252,7 @@ def linear_fit(channel, channel_unc, energy):
     return param
 #__________________________________________________________________________________
 
-def combine_chns():
+def combine_chns(time=False):
     """ Select the .chn files to combine into a single spinmob databox. 
     
     No arguments.
@@ -265,8 +265,10 @@ def combine_chns():
     databox['Counts'] -= databox['Counts'] # delete counts of saved databox
     for box in databoxes:
         databox['Counts'] += box['Counts'] # add all counts to saved databox
-
-    return databox
+    if time:
+        return (databox, len(databoxes))
+    else: 
+        return databox
 #__________________________________________________________________________________
 
 def calibrate(n, fit=True, systematic=False):
@@ -351,9 +353,8 @@ def calibrate(n, fit=True, systematic=False):
     else:
         return channel, channel_unc, energy
 #__________________________________________________________________________________
-
-def energy_fit(energy, energy_unc, angle):
-    """ Fit function for the energy again angles. Used in "get_rest_mass()" function.
+def fixed_energy_fit(energy, energy_unc, angle):
+    """ Fit function for the energy against angles with angle offset fixed. Used in "get_rest_mass()" function.
     Arguments
     ---------
     energy:     array, energy peaks (obtained from the calibration values relating channel to energy);
@@ -366,8 +367,32 @@ def energy_fit(energy, energy_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '661.657/(1 + 661.657/E*(1-cos(pi*(x-x0)/180)))', p = 'E=511, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '661.657/(1 + 661.657/E*(1-cos(pi*x/180)))', p = 'E=511') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (KeV)$') # supply the data
+    f.set(plot_guess=False)
+    f.fit() # make the fit    
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+     
+    return param
+
+#__________________________________________________________________________________
+
+def energy_fit(energy, energy_unc, angle):
+    """ Fit function for the energy against angles. Used in "get_rest_mass()" function.
+    Arguments
+    ---------
+    energy:     array, energy peaks (obtained from the calibration values relating channel to energy);
+    energy_unc: array, uncertainty in energy;
+    angle:      array, angle under consideration;
+    
+    Return
+    ------
+    param:      fit parameters of energy vs angle;
+    """
+
+    f = s.data.fitter() # create a fitter object
+    f.set_functions(f = '661.657/(1 + 661.657/E*(1-cos(pi*(x-x0)/180)))+b', p = 'E=511, x0 = 180, b=10') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (keV)$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
     param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
@@ -412,7 +437,7 @@ def inv_energy_fit(energy, energy_unc, angle):
     """
     f = s.data.fitter() # create a fitter object
     f.set_functions(f = '1/661.6 + 1/E*(1-cos(pi*(x-x0)/180))', p = 'E=511, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
-    f.set_data(xdata = angle, ydata = energy**(-1), eydata = energy_unc * energy**(-2), xlabel='Angle (°)', ylabel='$Energy^{-1} (KeV^{-1})$') # supply the data
+    f.set_data(xdata = angle, ydata = energy**(-1), eydata = energy_unc * energy**(-2), xlabel='Angle (°)', ylabel='$Energy^{-1} (keV^{-1})$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
     param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
@@ -451,11 +476,13 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False, fit=True)
         data, unc = subtract_background()  # combine files of the same angle and scatterer
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
-        if element == 'Al' or element == 'Cu':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, el_peaks[angles[i]], 400, np.mean(el_peaks[angles[i]]), 30, 5, unc=unc)
+        if element == 'Al':
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, new_al_peaks[angles[i]], 40000, np.mean(new_al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
+        elif element == 'Cu':
+            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 40000, np.mean(al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
-            return        
+            return
         chan[i] = b
         chan_unc[i] = b_std
         energy[i] = m*b+c 
@@ -481,17 +508,18 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False, fit=True)
             return angles, energy, energy_unc
 #__________________________________________________________________________________
 
-def subtract_background(paths=None):
+def subtract_background(time = False):
     """ Subtract background data of scattered data. Choose files which are of the same angle. """
-    if paths is None:
-        data = combine_chns()
-        background = combine_chns()
-    else:
-        data = mcphysics.data.load_chns()
+    data, Nfiles = combine_chns(time = True)
+    background = combine_chns()
     unc = np.sqrt(data['Counts'] + background['Counts'])
     data['Counts'] -= background['Counts']
 
-    return [data, unc]
+    if time:
+        return [data, unc, Nfiles]
+    else:
+        return [data, unc]
+
 #__________________________________________________________________________________
 
 def get_sys_unc(n_regions):
@@ -618,7 +646,8 @@ def plot_energy_angle(n, m, m_std, c, c_std, chan_fit=False):
 #__________________________________________________________________________________
 
 def eff_corr(counts, ene):
-    eff = np.interp(ene, NaIEfficiency_data[:, 0], NaIEfficiency_data[:, 1])
+    #eff = np.interp(ene, NaIEfficiency_data[:, 0], NaIEfficiency_data[:, 1])
+    eff = 2.5E-12*ene**5-6.3E-09*ene**4+5.9E-06*ene**3-0.0023*ene**2+0.17*ene+95
     # Attenuation of air is negligible and photopeak to total ratio is not important
 
     return 100 * counts/eff
@@ -666,7 +695,7 @@ def ThomFit(counts, counts_unc, angle):
 
 
 def NKfunc(x, N, alpha):
-    alpha = 1.29
+    alpha = 1.295
     a = alpha * (1-np.cos(np.pi*(x-180.77)/180))
     counts = ThomFunc(x, N)/(1+a)**2*(1 + a**2/((1 + (np.cos(np.pi*(x-180.77)/180))**2) * (1 + a)))
     return counts
@@ -725,11 +754,11 @@ def cross_fit(n, m, c, Thom=True, fit=True):
     param: array, fit parameters from the thom function;
     """
     print('Select all files associated to one scattered and angle, for multiple angles.')
-    counts = np.zeros(n)
-    counts_unc = np.zeros(n)
+    intensity = np.zeros(n)
+    intensity_unc = np.zeros(n)
     angles = []
     for i in range(0, n):
-        data, unc = subtract_background()  # combine files of the same angle and scatterer
+        data, unc, Nfiles = subtract_background(time=True)  # combine files of the same angle and scatterer
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
@@ -741,18 +770,18 @@ def cross_fit(n, m, c, Thom=True, fit=True):
             return
         
         ene = m*b+c 
-        counts[i] = eff_corr(A, ene)
-        counts_unc[i] = eff_corr(A_std, ene)
+        intensity[i] = eff_corr(A, ene) / (30 * Nfiles)
+        intensity_unc[i] = eff_corr(A_std, ene) / (30 * Nfiles)
         
     angles = np.array([int(angle) for angle in angles])
     if fit:
         if Thom:
-            param = ThomFit(counts, counts_unc, angles)
+            param = ThomFit(intensity, intensity_unc, angles)
         else:
-            param = NKfit(counts, counts_unc, angles)
+            param = NKfit(intensity, intensity_unc, angles)
         return param
     else:
-        return ene, counts, counts_unc
+        return angles, intensity, intensity_unc
 #__________________________________________________________________________________
 
 def get_region_bounds(n, k, lin = True, chan_fit = False):
@@ -795,3 +824,40 @@ def get_region_bounds(n, k, lin = True, chan_fit = False):
 
 #__________________________________________________________________________________
 
+def plot_cross_section():
+    n = 16
+    Thom = False
+    N_al = 9.6E24 
+    N_cu = 3E25
+    time_sec = 150
+    factor = 2
+
+    extended_angles = np.linspace(min(angles)-10, max(angles)+10)
+    fig1 = plt.figure(1)
+    frame1=fig1.add_axes((.1,.3,.8,.6))
+    plt.errorbar(angles-180.77, y=intensity, yerr=intensity_unc, fmt="o", label="Data")
+    plt.plot(extended_angles-180.77, compton.ThomFunc(extended_angles, N_al/factor), color='red', linestyle="-", label='Thomson') # best estimate for linear fit
+    plt.plot(extended_angles-180.77, compton.NKfunc(extended_angles, N_al/factor, 1.29), color='Green', linestyle="-", label='N-K') # best estimate for linear fit
+    plt.ylabel('Detection Rate', Fontsize=18)
+    plt.xlim(extended_angles[0]-180.77, extended_angles[-1]-180.77)
+    plt.legend(loc="upper right", fontsize=16)
+    plt.yticks(fontsize=14)
+    frame1.set_xticklabels([]) #Remove x-tic labels for the first frame
+    plt.grid()
+    plt.yscale('linear')
+    #Residual plot
+    frame2=fig1.add_axes((.1,.1,.8,.2))
+    if Thom:
+        plt.errorbar(angles-180.77, (intensity/time_sec-compton.ThomFunc(angles, N_al/factor))/intensity_unc, yerr=intensity_unc/intensity_unc, fmt='o', color='blue', alpha=0.75, zorder=0)
+    else:
+        plt.errorbar(angles-180.77, time_sec*(intensity/time_sec-compton.NKfunc(angles, N_al/factor, 1.29))/intensity_unc, yerr=intensity_unc/intensity_unc, fmt='o', color='blue', alpha=0.75, zorder=0)
+    plt.xlabel('Angles (°)', Fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.ylabel('Studentized \n Residuals', Fontsize=18, labelpad=0)
+    plt.xlim(extended_angles[0]-180.77, extended_angles[-1]-180.77)
+    #plt.ylim(-4,4)
+    #plt.yticks([-20,-10,0,10])
+    #plt.ylim(-20,20)
+    plt.hlines(0, extended_angles[0]-180.77, extended_angles[-1]-180.77, color='red', linewidth=1, zorder=5)
+    plt.grid()

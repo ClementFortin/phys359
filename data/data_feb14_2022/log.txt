@@ -1,0 +1,84 @@
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 105 degrees:
+  No Scatterer (Before)
+    591/661: Transferred file 33
+    592/661: Transferred file 34
+    593/661: Transferred file 39
+    594/661: Transferred file 27
+    595/661: Transferred file 14
+  Copper
+    596/661: Transferred file 20
+    597/661: Transferred file 0
+    598/661: Transferred file 30
+    599/661: Transferred file 15
+    600/661: Transferred file 26
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 240 degrees:
+  No Scatterer (Before)
+    601/661: Transferred file 0
+    602/661: Transferred file 33
+    603/661: Transferred file 20
+    604/661: Transferred file 23
+    605/661: Transferred file 3
+  Copper
+    606/661: Transferred file 19
+    607/661: Transferred file 2
+    608/661: Transferred file 31
+    609/661: Transferred file 8
+    610/661: Transferred file 27
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 250 degrees:
+  No Scatterer (Before)
+    611/661: Transferred file 29
+    612/661: Transferred file 34
+    613/661: Transferred file 13
+    614/661: Transferred file 39
+    615/661: Transferred file 31
+  Copper
+    616/661: Transferred file 9
+    617/661: Transferred file 38
+    618/661: Transferred file 23
+    619/661: Transferred file 26
+    620/661: Transferred file 15
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 260 degrees:
+  No Scatterer (Before)
+    621/661: Transferred file 35
+    622/661: Transferred file 5
+    623/661: Transferred file 36
+    624/661: Transferred file 37
+    625/661: Transferred file 28
+  Copper
+    626/661: Transferred file 10
+    627/661: Transferred file 20
+    628/661: Transferred file 3
+    629/661: Transferred file 34
+    630/661: Transferred file 21
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 280 degrees:
+  No Scatterer (Before)
+    631/661: Transferred file 0
+    632/661: Transferred file 23
+    633/661: Transferred file 24
+    634/661: Transferred file 34
+    635/661: Transferred file 9
+  Copper
+    636/661: Transferred file 13
+    637/661: Transferred file 26
+    638/661: Transferred file 9
+    639/661: Transferred file 4
+    640/661: Transferred file 35
+
+clement.fortin@mail.mcgill.ca requesting 5 files per target at 220 degrees:
+  Aluminum
+    641/661: Transferred file 32
+    642/661: Transferred file 31
+    643/661: Transferred file 34
+    644/661: Transferred file 9
+    645/661: Transferred file 16
+  No Scatterer (Before)
+    646/661: Transferred file 1
+    647/661: Transferred file 3
+    648/661: Transferred file 34
+    649/661: Transferred file 13
+    650/661: Transferred file 4

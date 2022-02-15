@@ -445,7 +445,7 @@ def inv_energy_fit(energy, energy_unc, angle):
     return param
 #__________________________________________________________________________________
 
-def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False, fit=True):
+def get_rest_mass(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.4802, m2_std=0.0014, c2=-8.74, c2_std=0.49, lin =True, chan_fit=False, fit=True):
     """ Using the "energy_fit()" function above, fit the relation for energy against angle for angles selected. This function also requires background data to be selected 
     following the selection of a scatterer at a certain angle (background data must be at the same angle).
     Example for n=3 (fit for three different angles, say 220, 230, 240):
@@ -467,31 +467,56 @@ def get_rest_mass(n, m, m_std, c, c_std, lin = True, chan_fit = False, fit=True)
     param: array, fit parameters from the energy_fit function;
     """
     print('Select all files associated to one scattered and angle, for multiple angles.')
-    energy = np.zeros(n)
-    energy_unc = np.zeros(n)
-    chan = np.zeros(n)
-    chan_unc = np.zeros(n)
+    energy = np.zeros(n1+n2)
+    energy_unc = np.zeros(n1+n2)
+    chan = np.zeros(n1+n2)
+    chan_unc = np.zeros(n1+n2)
     angles = []
-    for i in range(0, n):
+    for i in range(0, n1):
         data, unc = subtract_background()  # combine files of the same angle and scatterer
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, new_al_peaks[angles[i]], 40000, np.mean(new_al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
+            _, _, b, b_std, _, _ = gaussian_fit(data, al_peaks[angles[i]], 40000, np.mean(al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
         elif element == 'Cu':
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 40000, np.mean(al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
+            _, _, b, b_std, _, _ = gaussian_fit(data, al_peaks[angles[i]], 40000, np.mean(cu_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
             return
         chan[i] = b
         chan_unc[i] = b_std
-        energy[i] = m*b+c 
-        energy_unc[i] = np.sqrt(m**2*(b_std)**2)
-        
-        # Do we need to add the systematic uncertainty for cesium to b_std
-        # to take into account the systematic uncertainties we had found for the calibration peak (shift and choice of background function)
-        # + sys_unc_channel['Cs']
-    angles = np.array([int(angle) for angle in angles])
+        energy[i] = m1*b+c1
+        energy_unc[i] = np.sqrt(m1**2*(b_std)**2)
+
+    subangles1 = np.array([int(angle) for angle in angles[0:n1]], dtype=np.float64)
+    param1 = energy_fit(energy[0:n1], energy_unc[0:n1], subangles1)
+    plt.close()
+    subangles1 -= param1[2]
+    if n2 > 0: 
+        for j in range(0, n2):
+            data, unc = subtract_background()  # combine files of the same angle and scatterer
+            angles.append(data.headers['description'][4:7]) # retrieve angle 
+            element = data.headers['description'][0:2]
+            if element == 'Al':
+                _, _, b, b_std, _, _ = gaussian_fit(data, new_al_peaks[angles[n1+j]], 40000, np.mean(new_al_peaks[angles[n1+j]]), 30, 5, unc=unc, lin=True)
+            #elif element == 'Cu':
+            #    _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, new_al_peaks[angles[i]], 40000, np.mean(new_al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
+            else: 
+                print('Energy fit for' + element + ' not yet implemented.')
+                return
+            chan[j] = b
+            chan_unc[j] = b_std
+            energy[j] = m2*b+c2
+            energy_unc[j] = np.sqrt(m2**2*(b_std)**2)
+        subangles2 = np.array([int(angle) for angle in angles[n1:n1+n2]], dtype=np.float64)
+        print(subangles2, energy[n1:n1+n2], energy_unc[n1:n1+n2])
+        param2 = energy_fit(energy[n1:n1+n2], energy_unc[n1:n1+n2], subangles2)
+        plt.close()
+        subangles2 -= param2[2]
+        angles = np.hstack([subangles1, subangles2])
+    else:
+        angles = subangles1
+
     if fit: # plot energy
         if chan_fit:
             param = energy_chan_fit(chan, chan_unc, angles)

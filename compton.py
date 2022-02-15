@@ -504,12 +504,11 @@ def get_rest_mass(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=
             else: 
                 print('Energy fit for' + element + ' not yet implemented.')
                 return
-            chan[j] = b
-            chan_unc[j] = b_std
-            energy[j] = m2*b+c2
-            energy_unc[j] = np.sqrt(m2**2*(b_std)**2)
+            chan[n1+j] = b
+            chan_unc[n1+j] = b_std
+            energy[n1+j] = m2*b+c2
+            energy_unc[n1+j] = np.sqrt(m2**2*(b_std)**2)
         subangles2 = np.array([int(angle) for angle in angles[n1:n1+n2]], dtype=np.float64)
-        print(subangles2, energy[n1:n1+n2], energy_unc[n1:n1+n2])
         param2 = energy_fit(energy[n1:n1+n2], energy_unc[n1:n1+n2], subangles2)
         plt.close()
         subangles2 -= param2[2]
@@ -522,7 +521,7 @@ def get_rest_mass(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=
             param = energy_chan_fit(chan, chan_unc, angles)
         else:
             if lin:
-                param = energy_fit(energy, energy_unc, angles)
+                param = fixed_energy_fit(energy, energy_unc, angles)
             else:
                 param = inv_energy_fit(energy, energy_unc, angles)
         return param
@@ -678,8 +677,8 @@ def eff_corr(counts, ene):
     return 100 * counts/eff
 #__________________________________________________________________________________
 
-def ThomFunc(x, N):
-    theta0 = 180.77 # offset in degrees
+def ThomFunc(x, N, x0):
+    #theta0 = 180.77 # offset in degrees
     I = 3.7 * 10**9 # initial activity of source in Bq (October 17 1974)
     t = 47.34 # time in years since ^^
     half_life = 30.05 # in years
@@ -688,7 +687,7 @@ def ThomFunc(x, N):
     num_photon_per_sec = 0.85
     r0 = 2.818E-13
     target_detector = 0.0175
-    counts = N * (I * np.exp(-t/(half_life*mean_life_factor)) / (4 * np.pi * p0**2)) * num_photon_per_sec * 1/2 * (r0)**2 * (1+np.cos(np.pi*(x-theta0)/180)**2) * target_detector
+    counts = N * (I * np.exp(-t/(half_life*mean_life_factor)) / (4 * np.pi * p0**2)) * num_photon_per_sec * 1/2 * (r0)**2 * (1+np.cos(np.pi*(x-x0)/180)**2) * target_detector
     return counts
     
 #__________________________________________________________________________________
@@ -708,11 +707,11 @@ def ThomFit(counts, counts_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = ThomFunc, p = 'N ='+str(10E25)) 
-    f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Angle (°)', ylabel='$Counts$') # supply the data
+    f.set_functions(f = ThomFunc, p = 'N ='+str(10E25)+', x0 = 180') 
+    f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Scattered Angle (°)', ylabel='Counts') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['N'], f.get_fit_results()['N.std']] # fit parameters
+    param = [f.get_fit_results()['N'], f.get_fit_results()['N.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
      
     return param
 
@@ -760,7 +759,7 @@ def NKfit(counts, counts_unc, angle, fix_alpha=False):
 
 #__________________________________________________________________________________
 
-def cross_fit(n, m, c, Thom=True, fit=True):
+def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.4802, m2_std=0.0014, c2=-8.74, c2_std=0.49, Thom=True, fit=True):
     """ Using the "energy_fit()" function above, fit the relation for energy against angle for angles selected. This function also requires background data to be selected 
     following the selection of a scatterer at a certain angle (background data must be at the same angle).
     Example for n=3 (fit for three different angles, say 220, 230, 240):
@@ -779,26 +778,61 @@ def cross_fit(n, m, c, Thom=True, fit=True):
     param: array, fit parameters from the thom function;
     """
     print('Select all files associated to one scattered and angle, for multiple angles.')
-    intensity = np.zeros(n)
-    intensity_unc = np.zeros(n)
+    intensity = np.zeros(n1+n2)
+    intensity_unc = np.zeros(n1+n2)
     angles = []
-    for i in range(0, n):
+    for i in range(0, n1):
         data, unc, Nfiles = subtract_background(time=True)  # combine files of the same angle and scatterer
         angles.append(data.headers['description'][4:7]) # retrieve angle 
         element = data.headers['description'][0:2]
         if element == 'Al':
-            A, A_std, b, b_std, sigma, sigma_std = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
+            A, A_std, b, _, _, _ = gaussian_fit(data, al_peaks[angles[i]], 400, np.mean(al_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
         elif element == 'Cu':
-            A, A_std, b, b_std, sigma, sigma_std = gaussian_fit(data, cu_peaks[angles[i]], 400, np.mean(cu_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
+            A, A_std, b, _, _, _ = gaussian_fit(data, cu_peaks[angles[i]], 400, np.mean(cu_peaks[angles[i]]), 30, 5, unc=unc, lin=True)
         else: 
             print('Energy fit for' + element + ' not yet implemented.')
             return
         
-        ene = m*b+c 
+        ene = m1*b+c1 
         intensity[i] = eff_corr(A, ene) / (30 * Nfiles)
         intensity_unc[i] = eff_corr(A_std, ene) / (30 * Nfiles)
-        
-    angles = np.array([int(angle) for angle in angles])
+
+    subangles1 = np.array([int(angle) for angle in angles[0:n1]], dtype=np.float64)
+    if Thom:
+        param1 = ThomFit(intensity[0:n1], intensity_unc[0:n1], subangles1)
+    else:
+        param1 = NKfit(intensity[0:n1], intensity_unc[0:n1], subangles1) 
+    plt.close()
+    subangles1 -= param1[2]
+
+    if n2 > 0:
+        for j in range(0, n2):
+            data, unc, Nfiles = subtract_background(time=True)  # combine files of the same angle and scatterer
+            angles.append(data.headers['description'][4:7]) # retrieve angle 
+            element = data.headers['description'][0:2]
+            if element == 'Al':
+                A, A_std, b, _, _, _ = gaussian_fit(data, new_al_peaks[angles[j]], 400, np.mean(new_al_peaks[angles[j]]), 30, 5, unc=unc, lin=True)
+            elif element == 'Cu':
+                A, A_std, b, _, _, _ = gaussian_fit(data, cu_peaks[angles[j]], 400, np.mean(cu_peaks[angles[j]]), 30, 5, unc=unc, lin=True)
+            else: 
+                print('Energy fit for' + element + ' not yet implemented.')
+                return
+            
+            ene = m2*b+c2 
+            intensity[n1+j] = eff_corr(A, ene) / (30 * Nfiles)
+            intensity_unc[n1+j] = eff_corr(A_std, ene) / (30 * Nfiles)
+
+        subangles2 = np.array([int(angle) for angle in angles[n1:n1+n2]], dtype=np.float64)
+        if Thom:
+            param2 = ThomFit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2)
+        else:
+            param2 = NKfit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2)
+        plt.close()
+        subangles2 -= param2[2]
+        angles = np.hstack([subangles1, subangles2])
+    
+    else:     
+        angles = subangles1
     if fit:
         if Thom:
             param = ThomFit(intensity, intensity_unc, angles)

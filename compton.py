@@ -367,11 +367,11 @@ def fixed_energy_fit(energy, energy_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '661.657/(1 + 661.657/E*(1-cos(pi*x/180)))', p = 'E=511') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = 'A/(1 + A/E*(1-cos(pi*x/180)))', p = 'E=511, A=661.657') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (KeV)$') # supply the data
     f.set(plot_guess=False)
     f.fit() # make the fit    
-    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std']] # fit parameters
+    param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['A'], f.get_fit_results()['A.std']] # fit parameters
      
     return param
 
@@ -391,10 +391,10 @@ def energy_fit(energy, energy_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = '661.657/(1 + 661.657/E*(1-cos(pi*(x-x0)/180)))+b', p = 'E=511, x0 = 180, b=10') # set the function, with E = m_e c^2 (electron rest mass energy)
+    f.set_functions(f = '661.657/(1 + 661.657/E*(1-cos(pi*(x-x0)/180)))', p = 'E=511, x0 = 180') # set the function, with E = m_e c^2 (electron rest mass energy)
     f.set_data(xdata = angle, ydata = energy, eydata = energy_unc, xlabel='Angle (°)', ylabel='$Energy (keV)$') # supply the data
     f.set(plot_guess=False)
-    f.fit() # make the fit    
+    f.fit() # make the fit
     param = [f.get_fit_results()['E'], f.get_fit_results()['E.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
      
     return param
@@ -677,6 +677,19 @@ def eff_corr(counts, ene):
     return 100 * counts/eff
 #__________________________________________________________________________________
 
+def ThomFunc_fixed(x, N):
+    #theta0 = 180.77 # offset in degrees
+    I = 3.7 * 10**9 # initial activity of source in Bq (October 17 1974)
+    t = 47.34 # time in years since ^^
+    half_life = 30.05 # in years
+    mean_life_factor = 1.4427
+    p0 = 52.64 # cm
+    num_photon_per_sec = 0.85
+    r0 = 2.818E-13
+    target_detector = 0.0175
+    counts = N * (I * np.exp(-t/(half_life*mean_life_factor)) / (4 * np.pi * p0**2)) * num_photon_per_sec * 1/2 * (r0)**2 * (1+np.cos(np.pi*(x)/180)**2) * target_detector
+    return counts
+
 def ThomFunc(x, N, x0):
     #theta0 = 180.77 # offset in degrees
     I = 3.7 * 10**9 # initial activity of source in Bq (October 17 1974)
@@ -693,7 +706,7 @@ def ThomFunc(x, N, x0):
 #__________________________________________________________________________________
 
 
-def ThomFit(counts, counts_unc, angle):
+def ThomFit(counts, counts_unc, angle, fixed=False):
     """ Fit function for the Thomson cross section
     Arguments
     ---------
@@ -707,27 +720,41 @@ def ThomFit(counts, counts_unc, angle):
     """
 
     f = s.data.fitter() # create a fitter object
-    f.set_functions(f = ThomFunc, p = 'N ='+str(10E25)+', x0 = 180') 
-    f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Scattered Angle (°)', ylabel='Counts') # supply the data
-    f.set(plot_guess=False)
-    f.fit() # make the fit    
-    param = [f.get_fit_results()['N'], f.get_fit_results()['N.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
+    if fixed:
+        f.set_functions(f = ThomFunc_fixed, p = 'N ='+str(10E25)) 
+        f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Scattered Angle (°)', ylabel='Counts') # supply the data
+        f.set(plot_guess=False)
+        f.fit() # make the fit    
+        param = [f.get_fit_results()['N'], f.get_fit_results()['N.std']] # fit parameters
+    else:
+        f.set_functions(f = ThomFunc, p = 'N ='+str(10E25)+', x0 = 180') 
+        f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Scattered Angle (°)', ylabel='Counts') # supply the data
+        f.set(plot_guess=False)
+        f.fit() # make the fit    
+        param = [f.get_fit_results()['N'], f.get_fit_results()['N.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
      
     return param
 
 #__________________________________________________________________________________
 
 
-def NKfunc(x, N, alpha):
-    alpha = 1.295
-    a = alpha * (1-np.cos(np.pi*(x-180.77)/180))
-    counts = ThomFunc(x, N)/(1+a)**2*(1 + a**2/((1 + (np.cos(np.pi*(x-180.77)/180))**2) * (1 + a)))
-    return counts
+def NKfunc_fixed(x, N, alpha):
+    # no angle offset considered
+    #alpha = 1.295
+    #a = alpha * (1-np.cos(np.pi*(x)/180))
+    return ThomFunc(x, N)/(1+alpha * (1-np.cos(np.pi*(x)/180)))**2*(1 + (alpha * (1-np.cos(np.pi*(x)/180)))**2/((1 + (np.cos(np.pi*(x)/180))**2) * (1 + alpha * (1-np.cos(np.pi*(x)/180)))))
     
+
+def NKfunc(x, N, alpha, x0):
+    # no angle offset considered
+    #alpha = 1.295
+    #a = alpha * (1-np.cos(np.pi*(x-x0)/180))
+    return ThomFunc(x, N, x0)/(1+alpha * (1-np.cos(np.pi*(x-x0)/180)))**2*(1 + (alpha * (1-np.cos(np.pi*(x-x0)/180)))**2/((1 + (np.cos(np.pi*(x-x0)/180))**2) * (1 + alpha * (1-np.cos(np.pi*(x-x0)/180)))))
+  
 #__________________________________________________________________________________
 
 
-def NKfit(counts, counts_unc, angle, fix_alpha=False):
+def NKfit(counts, counts_unc, angle, fixed=False):
     """ Fit function for the NK cross section
     Arguments
     ---------
@@ -740,26 +767,24 @@ def NKfit(counts, counts_unc, angle, fix_alpha=False):
     param:      Number of electrons / seconds;
     """
     f = s.data.fitter() # create a fitter object
-    if fix_alpha:
-        f.set_functions(f = NKfunc, p = 'N ='+str(10E25)) 
-        f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Angle (°)', ylabel='$Counts$') # supply the data
+    if fixed:
+        f.set_functions(f = NKfunc_fixed, p = 'N ='+str(10E25)+', alpha = 1.3') 
+        f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Scattered Angle (°)', ylabel='Counts') # supply the data
         f.set(plot_guess=False)
         f.fit() # make the fit
-        param = [f.get_fit_results()['N'], f.get_fit_results()['N.std']] # fit parameters
-        
-        return param
+        param = [f.get_fit_results()['N'], f.get_fit_results()['N.std'], f.get_fit_results()['alpha'], f.get_fit_results()['alpha.std']] # fit parameters        
     else:
-        f.set_functions(f = NKfunc, p = 'N ='+str(10E25)+', alpha = 1.3') 
-        f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Angle (°)', ylabel='$Counts$') # supply the data
+        f.set_functions(f = NKfunc, p = 'N ='+str(10E25)+', alpha = 1.3, x0 = 180') 
+        f.set_data(xdata = angle, ydata = counts, eydata = counts_unc, xlabel='Scattered Angle (°)', ylabel='Counts') # supply the data
         f.set(plot_guess=False)
         f.fit() # make the fit
-        param = [f.get_fit_results()['N'], f.get_fit_results()['N.std'], f.get_fit_results()['alpha'], f.get_fit_results()['alpha.std']] # fit parameters
-        
-        return param
+        param = [f.get_fit_results()['N'], f.get_fit_results()['N.std'], f.get_fit_results()['alpha'], f.get_fit_results()['alpha.std'], f.get_fit_results()['x0'], f.get_fit_results()['x0.std']] # fit parameters
+    
+    return param
 
 #__________________________________________________________________________________
 
-def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.4802, m2_std=0.0014, c2=-8.74, c2_std=0.49, Thom=True, fit=True):
+def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.4802, m2_std=0.0014, c2=-8.74, c2_std=0.49, Thom=False, fit=True):
     """ Using the "energy_fit()" function above, fit the relation for energy against angle for angles selected. This function also requires background data to be selected 
     following the selection of a scatterer at a certain angle (background data must be at the same angle).
     Example for n=3 (fit for three different angles, say 220, 230, 240):
@@ -799,11 +824,12 @@ def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.48
 
     subangles1 = np.array([int(angle) for angle in angles[0:n1]], dtype=np.float64)
     if Thom:
-        param1 = ThomFit(intensity[0:n1], intensity_unc[0:n1], subangles1)
+        param1 = ThomFit(intensity[0:n1], intensity_unc[0:n1], subangles1, fixed=False)
     else:
-        param1 = NKfit(intensity[0:n1], intensity_unc[0:n1], subangles1) 
+        param1 = NKfit(intensity[0:n1], intensity_unc[0:n1], subangles1, fixed=False) 
     plt.close()
-    subangles1 -= param1[2]
+    print(param1)
+    subangles1 -= param1[4]
 
     if n2 > 0:
         for j in range(0, n2):
@@ -811,9 +837,9 @@ def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.48
             angles.append(data.headers['description'][4:7]) # retrieve angle 
             element = data.headers['description'][0:2]
             if element == 'Al':
-                A, A_std, b, _, _, _ = gaussian_fit(data, new_al_peaks[angles[j]], 400, np.mean(new_al_peaks[angles[j]]), 30, 5, unc=unc, lin=True)
+                A, A_std, b, _, _, _ = gaussian_fit(data, new_al_peaks[angles[j+n1]], 40000, np.mean(new_al_peaks[angles[j+n1]]), 30, 5, unc=unc, lin=True)
             elif element == 'Cu':
-                A, A_std, b, _, _, _ = gaussian_fit(data, cu_peaks[angles[j]], 400, np.mean(cu_peaks[angles[j]]), 30, 5, unc=unc, lin=True)
+                A, A_std, b, _, _, _ = gaussian_fit(data, cu_peaks[angles[j+n1]], 40000, np.mean(cu_peaks[angles[j+n1]]), 30, 5, unc=unc, lin=True)
             else: 
                 print('Energy fit for' + element + ' not yet implemented.')
                 return
@@ -824,20 +850,20 @@ def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.48
 
         subangles2 = np.array([int(angle) for angle in angles[n1:n1+n2]], dtype=np.float64)
         if Thom:
-            param2 = ThomFit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2)
+            param2 = ThomFit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2, fixed=False)
         else:
-            param2 = NKfit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2)
+            param2 = NKfit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2, fxied=False)
         plt.close()
-        subangles2 -= param2[2]
+        subangles2 -= param2[4]
         angles = np.hstack([subangles1, subangles2])
     
     else:     
         angles = subangles1
     if fit:
         if Thom:
-            param = ThomFit(intensity, intensity_unc, angles)
+            param = ThomFit(intensity, intensity_unc, angles, fixed=True)
         else:
-            param = NKfit(intensity, intensity_unc, angles)
+            param = NKfit(intensity, intensity_unc, angles, fixed=True)
         return param
     else:
         return angles, intensity, intensity_unc

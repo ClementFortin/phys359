@@ -271,7 +271,7 @@ def combine_chns(time=False):
         return databox
 #__________________________________________________________________________________
 
-def calibrate(n, fit=True, systematic=False):
+def calibrate(n, new=False, fit=True, systematic=False):
     """ Find the linear fit parameters associated to the relationship between peak channel and energy by first finding the gaussian parameters associated to each peak.
     
     Argument
@@ -288,65 +288,127 @@ def calibrate(n, fit=True, systematic=False):
     for i in range(0,n):
         data = combine_chns() # store combined databox 
         element = data.headers['description'][0:2]
-        if element == 'Ba':
-            for j in range(1,3): # loop over all peaks of Barium
-                _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
-                if j == 0:
-                    _, _, b, b_std, sigma, sigma_std, _, _ = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j], 
-                                                                          A1=n*25000, b1=94, sigma1=10, two_peaks=True) # fit two gaussians
-                    energy = np.append(energy, energy_dict[element][j])
-                    channel = np.append(channel, b)
-                    if systematic: # taking into account systematic uncertainties 
-                        channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
-                    else: 
-                        channel_unc = np.append(channel_unc, b_std ) # width of peak 
+        if new:
+            if element == 'Ba':
+                for j in range(1,3): # loop over all peaks of Barium
+                    _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, new_peaks[element][j], **new_gaussian_guesses[element][j]) # fit gaussian 
+                    if j == 0:
+                        _, _, b, b_std, sigma, sigma_std, _, _ = gaussian_fit(data, new_peaks[element][j], **new_gaussian_guesses[element][j], 
+                                                                            A1=n*25000, b1=94, sigma1=10, two_peaks=True) # fit two gaussians
+                        energy = np.append(energy, energy_dict[element][j])
+                        channel = np.append(channel, b)
+                        if systematic: # taking into account systematic uncertainties 
+                            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                        else: 
+                            channel_unc = np.append(channel_unc, b_std ) # width of peak 
+                        
+                    if j == 1:
+                        _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, new_peaks[element][j], **new_gaussian_guesses[element][j], 
+                                                                            B0 = -30, lin=True) # fit gaussian and linear background
+                        energy = np.append(energy, energy_dict[element][j])
+                        channel = np.append(channel, b)
+                        if systematic:
+                            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                        else:
+                            channel_unc = np.append(channel_unc, b_std) # width of peak
                     
-                if j == 1:
-                    _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j], 
-                                                                          B0 = -30, lin=True) # fit gaussian and linear background
-                    energy = np.append(energy, energy_dict[element][j])
-                    channel = np.append(channel, b)
-                    if systematic:
-                        channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
-                    else:
-                        channel_unc = np.append(channel_unc, b_std) # width of peak
-                
-                if j == 2:
-                    _, _, b, b_std, sigma, sigma_std, b2, b2_std, _, _ = gaussian_fit(data, [peaks[element][2][0], peaks[element][3][1]], **gaussian_guesses['Ba'][3],
-                                      A1=n*25000, b1=830, sigma1=30, A2=n*10000, b2 = 780, sigma2 = 30,
-                                      three_peaks=True) # fit two gaussian gaussian 
-                    energy = np.append(energy, energy_dict[element][2])
-                    channel = np.append(channel, b2)
-                    energy = np.append(energy, energy_dict[element][3])
-                    channel = np.append(channel, b)
-                    if systematic:
-                        channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][2])
-                        channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][3])
-                    else: 
-                        channel_unc = np.append(channel_unc, b2_std)
-                        channel_unc = np.append(channel_unc, b_std)
-        
-        elif element == 'Co':
-            _, _, b, b_std, sigma, sigma_std, _, _, b2, b2_std, _, _, _, _ = gaussian_fit(data, peaks[element], **gaussian_guesses[element], two_peaks=True) # fit gaussian 
-            energy = np.append(energy, energy_dict[element][0])
-            channel = np.append(channel, b)
-            energy = np.append(energy, energy_dict[element][1])
-            channel = np.append(channel, b2)
-            if systematic:
-                channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][0]) # width of peak 
-                channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][1]) # width of peak 
-            else:
-                channel_unc = np.append(channel_unc, b_std) # width of peak 
-                channel_unc = np.append(channel_unc, b2_std) # width of peak 
+                    if j == 2:
+                        _, _, b, b_std, sigma, sigma_std, b2, b2_std, _, _ = gaussian_fit(data, [new_peaks[element][2][0], new_peaks[element][3][1]], **new_gaussian_guesses['Ba'][3],
+                                        A1=n*25000, b1=830, sigma1=30, A2=n*10000, b2 = 780, sigma2 = 30,
+                                        three_peaks=True) # fit two gaussian gaussian 
+                        energy = np.append(energy, energy_dict[element][2])
+                        channel = np.append(channel, b2)
+                        energy = np.append(energy, energy_dict[element][3])
+                        channel = np.append(channel, b)
+                        if systematic:
+                            channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][2])
+                            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][3])
+                        else: 
+                            channel_unc = np.append(channel_unc, b2_std)
+                            channel_unc = np.append(channel_unc, b_std)
+            
+            elif element == 'Co':
+                _, _, b, b_std, sigma, sigma_std, _, _, b2, b2_std, _, _, _, _ = gaussian_fit(data, new_peaks[element], **new_gaussian_guesses[element], two_peaks=True) # fit gaussian 
+                energy = np.append(energy, energy_dict[element][0])
+                channel = np.append(channel, b)
+                energy = np.append(energy, energy_dict[element][1])
+                channel = np.append(channel, b2)
+                if systematic:
+                    channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][0]) # width of peak 
+                    channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][1]) # width of peak 
+                else:
+                    channel_unc = np.append(channel_unc, b_std) # width of peak 
+                    channel_unc = np.append(channel_unc, b2_std) # width of peak 
 
-        else:
-            _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element], **gaussian_guesses[element], B0=0, lin=True) # fit gaussian 
-            energy = np.append(energy, energy_dict[element])
-            channel = np.append(channel, b)
-            if systematic:
-                channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element]) # width of peak
-            else: 
-                channel_unc = np.append(channel_unc, b_std) # width of peak
+            else:
+                _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, new_peaks[element], **new_gaussian_guesses[element], B0=0, lin=True) # fit gaussian 
+                energy = np.append(energy, energy_dict[element])
+                channel = np.append(channel, b)
+                if systematic:
+                    channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element]) # width of peak
+                else: 
+                    channel_unc = np.append(channel_unc, b_std) # width of peak
+        else: # old calibration
+            if element == 'Ba':
+                for j in range(1,3): # loop over all peaks of Barium
+                    _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j]) # fit gaussian 
+                    if j == 0:
+                        _, _, b, b_std, sigma, sigma_std, _, _ = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j], 
+                                                                            A1=n*25000, b1=94, sigma1=10, two_peaks=True) # fit two gaussians
+                        energy = np.append(energy, energy_dict[element][j])
+                        channel = np.append(channel, b)
+                        if systematic: # taking into account systematic uncertainties 
+                            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                        else: 
+                            channel_unc = np.append(channel_unc, b_std ) # width of peak 
+                        
+                    if j == 1:
+                        _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element][j], **gaussian_guesses[element][j], 
+                                                                            B0 = -30, lin=True) # fit gaussian and linear background
+                        energy = np.append(energy, energy_dict[element][j])
+                        channel = np.append(channel, b)
+                        if systematic:
+                            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][j]) # width of peak
+                        else:
+                            channel_unc = np.append(channel_unc, b_std) # width of peak
+                    
+                    if j == 2:
+                        _, _, b, b_std, sigma, sigma_std, b2, b2_std, _, _ = gaussian_fit(data, [peaks[element][2][0], peaks[element][3][1]], **gaussian_guesses['Ba'][3],
+                                        A1=n*25000, b1=830, sigma1=30, A2=n*10000, b2 = 780, sigma2 = 30,
+                                        three_peaks=True) # fit two gaussian gaussian 
+                        energy = np.append(energy, energy_dict[element][2])
+                        channel = np.append(channel, b2)
+                        energy = np.append(energy, energy_dict[element][3])
+                        channel = np.append(channel, b)
+                        if systematic:
+                            channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][2])
+                            channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][3])
+                        else: 
+                            channel_unc = np.append(channel_unc, b2_std)
+                            channel_unc = np.append(channel_unc, b_std)
+            
+            elif element == 'Co':
+                _, _, b, b_std, sigma, sigma_std, _, _, b2, b2_std, _, _, _, _ = gaussian_fit(data, peaks[element], **gaussian_guesses[element], two_peaks=True) # fit gaussian 
+                energy = np.append(energy, energy_dict[element][0])
+                channel = np.append(channel, b)
+                energy = np.append(energy, energy_dict[element][1])
+                channel = np.append(channel, b2)
+                if systematic:
+                    channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element][0]) # width of peak 
+                    channel_unc = np.append(channel_unc, b2_std + sys_unc_channel[element][1]) # width of peak 
+                else:
+                    channel_unc = np.append(channel_unc, b_std) # width of peak 
+                    channel_unc = np.append(channel_unc, b2_std) # width of peak 
+
+            else:
+                _, _, b, b_std, sigma, sigma_std = gaussian_fit(data, peaks[element], **gaussian_guesses[element], B0=0, lin=True) # fit gaussian 
+                energy = np.append(energy, energy_dict[element])
+                channel = np.append(channel, b)
+                if systematic:
+                    channel_unc = np.append(channel_unc, b_std + sys_unc_channel[element]) # width of peak
+                else: 
+                    channel_unc = np.append(channel_unc, b_std) # width of peak
+
     if fit:    
         param = linear_fit(channel, channel_unc, energy) # do a linear fit for the channels computed against energy
         return param

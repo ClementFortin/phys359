@@ -742,7 +742,7 @@ def NKfunc_fixed(x, N, alpha):
     # no angle offset considered
     #alpha = 1.295
     #a = alpha * (1-np.cos(np.pi*(x)/180))
-    return ThomFunc(x, N)/(1+alpha * (1-np.cos(np.pi*(x)/180)))**2*(1 + (alpha * (1-np.cos(np.pi*(x)/180)))**2/((1 + (np.cos(np.pi*(x)/180))**2) * (1 + alpha * (1-np.cos(np.pi*(x)/180)))))
+    return ThomFunc_fixed(x, N)/(1+alpha * (1-np.cos(np.pi*(x)/180)))**2*(1 + (alpha * (1-np.cos(np.pi*(x)/180)))**2/((1 + (np.cos(np.pi*(x)/180))**2) * (1 + alpha * (1-np.cos(np.pi*(x)/180)))))
     
 
 def NKfunc(x, N, alpha, x0):
@@ -828,7 +828,6 @@ def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.48
     else:
         param1 = NKfit(intensity[0:n1], intensity_unc[0:n1], subangles1, fixed=False) 
     plt.close()
-    print(param1)
     subangles1 -= param1[4]
 
     if n2 > 0:

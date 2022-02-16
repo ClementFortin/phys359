@@ -852,7 +852,7 @@ def cross_fit(n1, n2=0, m1=0.3824, m1_std=0.001, c1=-13.43, c1_std=0.48, m2=0.48
         if Thom:
             param2 = ThomFit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2, fixed=False)
         else:
-            param2 = NKfit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2, fxied=False)
+            param2 = NKfit(intensity[n1:n1+n2], intensity_unc[n1:n1+n2], subangles2, fixed=False)
         plt.close()
         subangles2 -= param2[4]
         angles = np.hstack([subangles1, subangles2])
